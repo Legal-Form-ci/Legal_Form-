@@ -16,11 +16,11 @@ interface Testimonial {
   name: string;
   type: string;
   region: string;
-  rating: number;
-  testimonial: string;
-  show_publicly: boolean;
+  rating: number | null;
+  testimonial: string | null;
+  is_visible: boolean | null;
   created_at: string;
-  founder_name: string;
+  founder_name: string | null;
 }
 
 const TestimonialsAdmin = () => {
@@ -65,10 +65,10 @@ const TestimonialsAdmin = () => {
     setLoadingData(false);
   };
 
-  const togglePublicVisibility = async (id: string, currentStatus: boolean) => {
+  const togglePublicVisibility = async (id: string, currentStatus: boolean | null) => {
     const { error } = await supabase
       .from('created_companies')
-      .update({ show_publicly: !currentStatus })
+      .update({ is_visible: !currentStatus })
       .eq('id', id);
 
     if (error) {
@@ -150,24 +150,24 @@ const TestimonialsAdmin = () => {
                         <TableCell>
                           <div className="flex items-center gap-1">
                             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                            <span>{testimonial.rating}</span>
+                            <span>{testimonial.rating || 0}</span>
                           </div>
                         </TableCell>
                         <TableCell className="max-w-xs truncate">
                           {testimonial.testimonial || "Pas de témoignage"}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={testimonial.show_publicly ? "default" : "secondary"}>
-                            {testimonial.show_publicly ? "Visible" : "Masqué"}
+                          <Badge variant={testimonial.is_visible ? "default" : "secondary"}>
+                            {testimonial.is_visible ? "Visible" : "Masqué"}
                           </Badge>
                         </TableCell>
                         <TableCell>
                           <Button
                             size="sm"
-                            variant={testimonial.show_publicly ? "outline" : "default"}
-                            onClick={() => togglePublicVisibility(testimonial.id, testimonial.show_publicly)}
+                            variant={testimonial.is_visible ? "outline" : "default"}
+                            onClick={() => togglePublicVisibility(testimonial.id, testimonial.is_visible)}
                           >
-                            {testimonial.show_publicly ? (
+                            {testimonial.is_visible ? (
                               <>
                                 <XCircle className="mr-1 h-4 w-4" />
                                 Masquer

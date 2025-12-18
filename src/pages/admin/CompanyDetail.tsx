@@ -26,18 +26,17 @@ import RequestDocuments from "@/components/RequestDocuments";
 
 interface CompanyRequest {
   id: string;
-  tracking_number: string | null;
   structure_type: string;
   company_name: string | null;
   capital: string | null;
   activity: string | null;
-  region: string;
+  region: string | null;
   city: string | null;
-  address: string;
+  address: string | null;
   contact_name: string;
   phone: string;
   email: string;
-  status: string | null;
+  status: string;
   payment_status: string | null;
   estimated_price: number | null;
   additional_services: string[] | null;
@@ -50,20 +49,12 @@ interface Associate {
   full_name: string;
   phone: string | null;
   email: string | null;
-  birth_date: string | null;
-  birth_place: string | null;
-  id_number: string | null;
   marital_status: string | null;
   marital_regime: string | null;
   residence_address: string | null;
-  is_manager: boolean | null;
-  cash_contribution: number | null;
-  nature_contribution_value: number | null;
-  nature_contribution_description: string | null;
-  percentage: number | null;
-  number_of_shares: number | null;
-  share_start: number | null;
-  share_end: number | null;
+  profession: string | null;
+  shares_count: number | null;
+  shares_percentage: number | null;
 }
 
 const CompanyDetail = () => {
@@ -208,7 +199,7 @@ const CompanyDetail = () => {
                 </Badge>
               </h1>
               <p className="text-slate-400 mt-1">
-                N° {request.tracking_number || request.id.slice(0, 8)} • {request.structure_type.toUpperCase()}
+                N° {request.id.slice(0, 8).toUpperCase()} • {request.structure_type.toUpperCase()}
               </p>
             </div>
           </div>
@@ -413,16 +404,13 @@ const CompanyDetail = () => {
                             <div>
                               <h4 className="font-semibold text-white flex items-center gap-2">
                                 {associate.full_name}
-                                {associate.is_manager && (
-                                  <Badge className="bg-primary text-xs">Gérant</Badge>
-                                )}
                               </h4>
                               <p className="text-sm text-slate-400">Associé #{index + 1}</p>
                             </div>
-                            {associate.percentage && (
+                            {associate.shares_percentage && (
                               <div className="text-right">
-                                <p className="text-2xl font-bold text-primary">{associate.percentage}%</p>
-                                <p className="text-xs text-slate-400">{associate.number_of_shares} parts</p>
+                                <p className="text-2xl font-bold text-primary">{associate.shares_percentage}%</p>
+                                <p className="text-xs text-slate-400">{associate.shares_count || 0} parts</p>
                               </div>
                             )}
                           </div>
@@ -436,16 +424,12 @@ const CompanyDetail = () => {
                               <p className="text-white">{associate.email || 'N/A'}</p>
                             </div>
                             <div>
-                              <p className="text-slate-400">Apport numéraire</p>
-                              <p className="text-white">{associate.cash_contribution?.toLocaleString() || 0} FCFA</p>
+                              <p className="text-slate-400">Profession</p>
+                              <p className="text-white">{associate.profession || 'N/A'}</p>
                             </div>
                             <div>
-                              <p className="text-slate-400">Parts sociales</p>
-                              <p className="text-white">
-                                {associate.share_start && associate.share_end 
-                                  ? `N° ${associate.share_start} à ${associate.share_end}` 
-                                  : 'N/A'}
-                              </p>
+                              <p className="text-slate-400">Situation</p>
+                              <p className="text-white">{associate.marital_status || 'N/A'}</p>
                             </div>
                           </div>
                         </CardContent>

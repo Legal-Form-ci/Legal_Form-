@@ -14,16 +14,15 @@ import { LogOut } from "lucide-react";
 
 interface CompanyRequest {
   id: string;
-  tracking_number: string;
   structure_type: string;
   company_name: string;
-  region: string;
+  region: string | null;
   contact_name: string;
   phone: string;
   email: string;
   status: string;
   created_at: string;
-  estimated_price: number;
+  estimated_price: number | null;
 }
 
 const AdminDashboard = () => {
@@ -177,7 +176,7 @@ const AdminDashboard = () => {
                     {requests.map((request) => (
                       <TableRow key={request.id}>
                         <TableCell className="font-medium">
-                          {request.tracking_number}
+                          {request.id.slice(0, 8).toUpperCase()}
                         </TableCell>
                         <TableCell>{request.structure_type.toUpperCase()}</TableCell>
                         <TableCell>{request.company_name || 'N/A'}</TableCell>

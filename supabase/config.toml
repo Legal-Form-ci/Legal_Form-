@@ -1,1 +1,25 @@
 project_id = "qeznwyczskbjaeyhvuis"
+
+[functions.create-payment]
+verify_jwt = true
+
+[functions.payment-webhook]
+verify_jwt = false
+
+[functions.send-notification]
+verify_jwt = true
+
+[functions.send-payment-notification]
+verify_jwt = true
+
+[functions.upload-document]
+verify_jwt = true
+
+[functions.create-super-admin]
+verify_jwt = true
+
+[functions.secure-public-tracking]
+verify_jwt = false
+
+[functions.lexia-chat]
+verify_jwt = false

@@ -15,32 +15,27 @@ import { LogOut, Building2, Briefcase, DollarSign, Users } from "lucide-react";
 
 interface CompanyRequest {
   id: string;
-  tracking_number: string;
   structure_type: string;
   company_name: string;
-  region: string;
+  region: string | null;
   contact_name: string;
   phone: string;
   email: string;
   status: string;
   created_at: string;
-  estimated_price: number;
-  payment_status?: string;
+  estimated_price: number | null;
+  payment_status?: string | null;
 }
 
 interface ServiceRequest {
   id: string;
-  tracking_number: string;
   service_type: string;
-  company_name: string;
-  contact_name: string;
-  phone: string;
-  email: string;
+  company_name: string | null;
   status: string;
   created_at: string;
-  estimated_price: number;
-  payment_status?: string;
-  service_details?: any;
+  estimated_price: number | null;
+  payment_status?: string | null;
+  user_id: string;
 }
 
 const UnifiedDashboard = () => {
@@ -306,11 +301,11 @@ const UnifiedDashboard = () => {
                         {companyRequests.map((request) => (
                           <TableRow key={request.id}>
                             <TableCell className="font-medium">
-                              {request.tracking_number}
+                              {request.id.slice(0, 8).toUpperCase()}
                             </TableCell>
                             <TableCell>{request.structure_type.toUpperCase()}</TableCell>
                             <TableCell>{request.company_name || 'N/A'}</TableCell>
-                            <TableCell>{request.region}</TableCell>
+                            <TableCell>{request.region || 'N/A'}</TableCell>
                             <TableCell>
                               <div className="text-sm">
                                 <div>{request.contact_name}</div>
@@ -381,14 +376,13 @@ const UnifiedDashboard = () => {
                         {serviceRequests.map((request) => (
                           <TableRow key={request.id}>
                             <TableCell className="font-medium">
-                              {request.tracking_number}
+                              {request.id.slice(0, 8).toUpperCase()}
                             </TableCell>
                             <TableCell>{getServiceTypeLabel(request.service_type)}</TableCell>
-                            <TableCell>{request.company_name || request.contact_name}</TableCell>
+                            <TableCell>{request.company_name || 'N/A'}</TableCell>
                             <TableCell>
                               <div className="text-sm">
-                                <div>{request.contact_name}</div>
-                                <div className="text-muted-foreground">{request.phone}</div>
+                                <div className="text-muted-foreground">ID: {request.user_id.slice(0, 8)}</div>
                               </div>
                             </TableCell>
                             <TableCell>
