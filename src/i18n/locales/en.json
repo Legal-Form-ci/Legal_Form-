@@ -1,0 +1,202 @@
+{
+  "nav": {
+    "home": "Home",
+    "services": "Services",
+    "about": "About",
+    "pricing": "Pricing",
+    "contact": "Contact",
+    "blog": "Blog",
+    "ebooks": "E-books",
+    "dashboard": "Dashboard",
+    "login": "Login",
+    "logout": "Logout",
+    "regions": "Regions",
+    "showcase": "Companies Created",
+    "testimonials": "Testimonials",
+    "mySpace": "My Space",
+    "createCompany": "Create my company"
+  },
+  "home": {
+    "hero": {
+      "title": "Transform your idea into a",
+      "highlight": "viable business",
+      "subtitle": "Create, manage and support your business in Ivory Coast and around the world.",
+      "cta": "Create my company",
+      "services": "Our services"
+    },
+    "services": {
+      "title": "Our Services",
+      "subtitle": "Create, manage and support your business in Ivory Coast and around the world.",
+      "creation": {
+        "title": "Company Creation",
+        "desc": "From idea to operational launch"
+      },
+      "management": {
+        "title": "Company Management",
+        "desc": "Modifications and formalities"
+      },
+      "support": {
+        "title": "Support",
+        "desc": "Strategic support"
+      },
+      "other": {
+        "title": "Other formalities",
+        "desc": "Administrative procedures"
+      },
+      "viewAll": "View all our services"
+    },
+    "steps": {
+      "title": "How does it work?",
+      "subtitle": "Create your company in 4 simple steps",
+      "step1": {
+        "title": "Choose your service",
+        "desc": "Digitalization"
+      },
+      "step2": {
+        "title": "Fill out the form",
+        "desc": "Simple and fast information"
+      },
+      "step3": {
+        "title": "Validation & payment",
+        "desc": "Prices adapted to your region"
+      },
+      "step4": {
+        "title": "Follow-up until all your documents",
+        "desc": "Personalized follow-up"
+      },
+      "cta": "Start now"
+    },
+    "testimonials": {
+      "title": "Companies Created",
+      "subtitle": "Discover the testimonials of our satisfied clients",
+      "viewAll": "View all companies created",
+      "koffi": "Fast and professional service. The Legal Form team was available at every step.",
+      "kouassi": "I created my company in a short time.",
+      "diallo": "Simplified process, competent team. I highly recommend Legal Form."
+    }
+  },
+  "create": {
+    "title": "Create My Company",
+    "subtitle": "Follow the steps to start your project",
+    "step1": "Company",
+    "step2": "Location",
+    "step3": "Manager",
+    "step4": "Associates",
+    "step4Unique": "Sole Associate",
+    "step5": "Other procedures",
+    "step6": "Summary",
+    "structureType": "Legal Structure",
+    "companyName": "Company Name",
+    "capital": "Share Capital",
+    "city": "City",
+    "commune": "Municipality",
+    "quartier": "District",
+    "managerName": "Manager Name",
+    "managerPhone": "Manager Phone",
+    "managerEmail": "Manager Email",
+    "maritalStatus": "Marital Status",
+    "single": "Single",
+    "married": "Married",
+    "separationOfProperty": "Separation of property",
+    "communityOfProperty": "Community of property",
+    "estimatedPrice": "Estimated price",
+    "onQuote": "On quote",
+    "proceedPayment": "Proceed to payment",
+    "submitRequest": "Submit request"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "back": "Back",
+    "close": "Close",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "download": "Download",
+    "upload": "Upload",
+    "search": "Search",
+    "filter": "Filter",
+    "all": "All",
+    "new": "New",
+    "actions": "Actions",
+    "seeMore": "See more",
+    "readMore": "Read more",
+    "optional": "optional",
+    "previous": "Previous",
+    "next": "Next"
+  },
+  "dashboard": {
+    "welcome": "Welcome",
+    "loginTime": "Logged in at",
+    "totalRequests": "Total requests",
+    "pending": "Pending",
+    "inProgress": "In progress",
+    "completed": "Completed",
+    "recentRequests": "Recent requests",
+    "viewAll": "View all",
+    "noRequests": "No requests",
+    "createFirst": "Create your first request",
+    "goodMorning": "Good morning",
+    "goodAfternoon": "Good afternoon",
+    "goodEvening": "Good evening",
+    "user": "User",
+    "welcomeBack": "Welcome back to your space",
+    "loginAt": "Logged in at"
+  },
+  "footer": {
+    "about": "About Legal Form",
+    "description": "Your trusted partner to create and develop your business in Ivory Coast.",
+    "quickLinks": "Quick Links",
+    "contact": "Contact",
+    "followUs": "Follow Us",
+    "rights": "All rights reserved.",
+    "services": "Our Services",
+    "regions": "Our Regions"
+  },
+  "contact": {
+    "title": "Contact Us",
+    "subtitle": "Our team is here to answer all your questions",
+    "whatsappChat": "Chat on WhatsApp",
+    "form": {
+      "title": "Send us a message",
+      "name": "Full name",
+      "email": "Email",
+      "phone": "Phone",
+      "subject": "Subject",
+      "message": "Message",
+      "sending": "Sending...",
+      "send": "Send message"
+    }
+  },
+  "auth": {
+    "required": "Authentication required",
+    "requiredDesc": "You must be logged in to create a company",
+    "login": "Login",
+    "signup": "Sign up",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "loginButton": "Log in",
+    "signupButton": "Sign up",
+    "loginTitle": "Login to your account",
+    "signupTitle": "Create an account",
+    "loginDesc": "Log in to track your files",
+    "signupDesc": "Create an account to get started",
+    "accessSpace": "Access your personal space"
+  },
+  "form": {
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "next": "Next",
+    "previous": "Previous",
+    "required": "Required fields",
+    "email": "Email",
+    "phone": "Phone",
+    "name": "Full name",
+    "company": "Company name",
+    "message": "Message"
+  }
+}
