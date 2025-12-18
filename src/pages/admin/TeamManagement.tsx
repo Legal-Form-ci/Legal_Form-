@@ -3,105 +3,116 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { UserPlus, Edit, Trash2, Shield, Users } from "lucide-react";
+import { Shield, Users } from "lucide-react";
 import AdminLayout from "./AdminLayout";
 
-interface InternalUser {
+interface TeamMember {
   id: string;
   user_id: string;
   role: string;
-  full_name: string;
-  phone: string | null;
-  email: string;
-  is_active: boolean;
   created_at: string;
+  full_name: string | null;
+  phone: string | null;
+  email?: string;
 }
 
 const roleLabels: Record<string, string> = {
   admin: "Administrateur",
-  service_client: "Service Client",
-  superviseur: "Superviseur",
-  comptable: "Comptable",
-  controle_qualite: "Contrôle Qualité",
+  team: "Équipe",
+  client: "Client",
 };
 
 const roleColors: Record<string, string> = {
   admin: "bg-red-500",
-  service_client: "bg-blue-500",
-  superviseur: "bg-purple-500",
-  comptable: "bg-green-500",
-  controle_qualite: "bg-orange-500",
+  team: "bg-blue-500",
+  client: "bg-green-500",
 };
 
 const TeamManagement = () => {
   const { toast } = useToast();
-  const [users, setUsers] = useState<InternalUser[]>([]);
+  const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newUser, setNewUser] = useState({
-    full_name: "",
-    email: "",
-    phone: "",
-    role: "service_client",
-  });
 
   useEffect(() => {
-    fetchUsers();
+    fetchTeamMembers();
   }, []);
 
-  const fetchUsers = async () => {
+  const fetchTeamMembers = async () => {
     try {
-      const { data, error } = await supabase
-        .from('internal_users')
+      // Get all user roles with admin or team roles
+      const { data: rolesData, error: rolesError } = await supabase
+        .from('user_roles')
         .select('*')
+        .in('role', ['admin', 'team'])
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setUsers(data || []);
+      if (rolesError) throw rolesError;
+
+      // Get profiles for these users
+      const userIds = rolesData?.map(r => r.user_id) || [];
+      
+      if (userIds.length === 0) {
+        setMembers([]);
+        setLoading(false);
+        return;
+      }
+
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('user_id', userIds);
+
+      if (profilesError) throw profilesError;
+
+      // Combine data
+      const teamMembers: TeamMember[] = (rolesData || []).map(role => {
+        const profile = profilesData?.find(p => p.user_id === role.user_id);
+        return {
+          id: role.id,
+          user_id: role.user_id,
+          role: role.role,
+          created_at: role.created_at,
+          full_name: profile?.full_name || 'Non défini',
+          phone: profile?.phone || null,
+        };
+      });
+
+      setMembers(teamMembers);
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error('Error fetching team members:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger l'équipe",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const toggleUserStatus = async (id: string, currentStatus: boolean) => {
+  const updateRole = async (userId: string, newRole: string) => {
     try {
       const { error } = await supabase
-        .from('internal_users')
-        .update({ is_active: !currentStatus })
-        .eq('id', id);
+        .from('user_roles')
+        .update({ role: newRole })
+        .eq('user_id', userId);
 
       if (error) throw error;
 
       toast({
         title: "Succès",
-        description: `Utilisateur ${!currentStatus ? 'activé' : 'désactivé'}`,
+        description: "Rôle mis à jour",
       });
-      fetchUsers();
+      fetchTeamMembers();
     } catch (error) {
       toast({
         title: "Erreur",
-        description: "Impossible de modifier le statut",
+        description: "Impossible de modifier le rôle",
         variant: "destructive",
       });
     }
-  };
-
-  const handleCreateUser = async () => {
-    // Note: Creating internal users requires first creating an auth user
-    // This is a simplified version - in production, you'd use an edge function
-    toast({
-      title: "Information",
-      description: "La création d'utilisateurs internes nécessite une configuration supplémentaire. Contactez le développeur.",
-    });
-    setIsDialogOpen(false);
   };
 
   if (loading) {
@@ -121,75 +132,14 @@ const TeamManagement = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-white">Équipe Legal Form</h1>
-            <p className="text-slate-400 mt-1">Gérez les utilisateurs internes et leurs permissions</p>
+            <p className="text-slate-400 mt-1">Gérez les membres de l'équipe et leurs permissions</p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90">
-                <UserPlus className="mr-2 h-4 w-4" />
-                Ajouter un membre
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="bg-slate-800 border-slate-700 text-white">
-              <DialogHeader>
-                <DialogTitle>Ajouter un membre de l'équipe</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div>
-                  <Label className="text-slate-300">Nom complet</Label>
-                  <Input
-                    value={newUser.full_name}
-                    onChange={(e) => setNewUser({ ...newUser, full_name: e.target.value })}
-                    className="bg-slate-700 border-slate-600"
-                    placeholder="Prénom Nom"
-                  />
-                </div>
-                <div>
-                  <Label className="text-slate-300">Email</Label>
-                  <Input
-                    type="email"
-                    value={newUser.email}
-                    onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                    className="bg-slate-700 border-slate-600"
-                    placeholder="email@legalform.ci"
-                  />
-                </div>
-                <div>
-                  <Label className="text-slate-300">Téléphone</Label>
-                  <Input
-                    value={newUser.phone}
-                    onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
-                    className="bg-slate-700 border-slate-600"
-                    placeholder="+225 XX XX XX XX XX"
-                  />
-                </div>
-                <div>
-                  <Label className="text-slate-300">Rôle</Label>
-                  <Select value={newUser.role} onValueChange={(v) => setNewUser({ ...newUser, role: v })}>
-                    <SelectTrigger className="bg-slate-700 border-slate-600">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Administrateur</SelectItem>
-                      <SelectItem value="service_client">Service Client</SelectItem>
-                      <SelectItem value="superviseur">Superviseur</SelectItem>
-                      <SelectItem value="comptable">Comptable</SelectItem>
-                      <SelectItem value="controle_qualite">Contrôle Qualité</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button onClick={handleCreateUser} className="w-full bg-primary hover:bg-primary/90">
-                  Créer le membre
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
         </div>
 
         {/* Role Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-          {Object.entries(roleLabels).map(([role, label]) => {
-            const count = users.filter(u => u.role === role).length;
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          {Object.entries(roleLabels).filter(([role]) => role !== 'client').map(([role, label]) => {
+            const count = members.filter(m => m.role === role).length;
             return (
               <Card key={role} className="bg-slate-800 border-slate-700">
                 <CardContent className="p-4 text-center">
@@ -204,13 +154,16 @@ const TeamManagement = () => {
           })}
         </div>
 
-        {/* Users Table */}
+        {/* Members Table */}
         <Card className="bg-slate-800 border-slate-700">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Membres de l'équipe ({users.length})
+              Membres de l'équipe ({members.length})
             </CardTitle>
+            <CardDescription className="text-slate-400">
+              Utilisateurs avec des droits d'administration
+            </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -218,50 +171,53 @@ const TeamManagement = () => {
                 <TableHeader>
                   <TableRow className="border-slate-700">
                     <TableHead className="text-slate-300">Nom</TableHead>
-                    <TableHead className="text-slate-300">Email</TableHead>
                     <TableHead className="text-slate-300">Téléphone</TableHead>
                     <TableHead className="text-slate-300">Rôle</TableHead>
-                    <TableHead className="text-slate-300">Statut</TableHead>
                     <TableHead className="text-slate-300">Ajouté le</TableHead>
                     <TableHead className="text-slate-300">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users.length === 0 ? (
+                  {members.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-slate-400">
+                      <TableCell colSpan={5} className="text-center py-8 text-slate-400">
                         Aucun membre dans l'équipe
                       </TableCell>
                     </TableRow>
                   ) : (
-                    users.map((user) => (
-                      <TableRow key={user.id} className="border-slate-700 hover:bg-slate-700/50">
-                        <TableCell className="font-medium text-white">{user.full_name}</TableCell>
-                        <TableCell className="text-slate-300">{user.email}</TableCell>
-                        <TableCell className="text-slate-300">{user.phone || '-'}</TableCell>
+                    members.map((member) => (
+                      <TableRow key={member.id} className="border-slate-700 hover:bg-slate-700/50">
+                        <TableCell className="font-medium text-white">{member.full_name}</TableCell>
+                        <TableCell className="text-slate-300">{member.phone || '-'}</TableCell>
                         <TableCell>
-                          <Badge className={roleColors[user.role]}>
-                            {roleLabels[user.role]}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={user.is_active ? 'bg-green-500' : 'bg-red-500'}>
-                            {user.is_active ? 'Actif' : 'Inactif'}
+                          <Badge className={roleColors[member.role]}>
+                            {roleLabels[member.role] || member.role}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-slate-300">
-                          {new Date(user.created_at).toLocaleDateString('fr-FR')}
+                          {new Date(member.created_at).toLocaleDateString('fr-FR')}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => toggleUserStatus(user.id, user.is_active)}
-                              className="text-slate-300 hover:text-white"
-                            >
-                              {user.is_active ? 'Désactiver' : 'Activer'}
-                            </Button>
+                            {member.role === 'admin' ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => updateRole(member.user_id, 'team')}
+                                className="text-slate-300 hover:text-white"
+                              >
+                                Rétrograder
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => updateRole(member.user_id, 'admin')}
+                                className="text-slate-300 hover:text-white"
+                              >
+                                Promouvoir
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>

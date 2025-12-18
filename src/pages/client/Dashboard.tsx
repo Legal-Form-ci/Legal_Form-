@@ -14,14 +14,13 @@ import { LogOut, Plus, FileText, Building2, Clock } from "lucide-react";
 
 interface Request {
   id: string;
-  tracking_number: string | null;
   status: string;
   created_at: string;
   estimated_price: number | null;
   payment_status?: string | null;
   company_name: string | null;
   structure_type?: string;
-  region?: string;
+  region?: string | null;
   service_type?: string;
   type: 'company' | 'service';
 }
@@ -222,7 +221,7 @@ const ClientDashboard = () => {
                           }
                         </CardTitle>
                         <CardDescription className="mt-1">
-                          {t('dashboard.trackingNumber', 'N° de suivi')}: <span className="font-semibold text-foreground">{request.tracking_number || request.id.slice(0, 8)}</span>
+                          {t('dashboard.trackingNumber', 'N° de suivi')}: <span className="font-semibold text-foreground">{request.id.slice(0, 8).toUpperCase()}</span>
                         </CardDescription>
                       </div>
                       <Badge className={`${getStatusColor(request.status)} text-white`}>

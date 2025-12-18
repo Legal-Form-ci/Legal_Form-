@@ -29,15 +29,14 @@ import AdminLayout from "./AdminLayout";
 
 interface CompanyRequest {
   id: string;
-  tracking_number: string | null;
   structure_type: string;
-  company_name: string | null;
-  region: string;
+  company_name: string;
+  region: string | null;
   city: string | null;
   contact_name: string;
   phone: string;
   email: string;
-  status: string | null;
+  status: string;
   payment_status: string | null;
   estimated_price: number | null;
   created_at: string;
@@ -90,7 +89,7 @@ const CompaniesManagement = () => {
       filtered = filtered.filter(r =>
         r.company_name?.toLowerCase().includes(query) ||
         r.contact_name.toLowerCase().includes(query) ||
-        r.tracking_number?.toLowerCase().includes(query) ||
+        r.id.toLowerCase().includes(query) ||
         r.email.toLowerCase().includes(query) ||
         r.phone.includes(query)
       );
@@ -262,7 +261,7 @@ const CompaniesManagement = () => {
                         onClick={() => navigate(`/admin/company/${request.id}`)}
                       >
                         <TableCell className="font-medium text-white">
-                          {request.tracking_number || request.id.slice(0, 8)}
+                          {request.id.slice(0, 8).toUpperCase()}
                         </TableCell>
                         <TableCell className="text-white">
                           {request.company_name || 'N/A'}

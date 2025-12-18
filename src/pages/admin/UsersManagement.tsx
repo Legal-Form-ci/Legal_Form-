@@ -37,10 +37,11 @@ import Footer from '@/components/Footer';
 
 interface UserProfile {
   id: string;
-  full_name: string;
+  user_id: string;
+  full_name: string | null;
   phone: string | null;
   email?: string;
-  role?: 'admin' | 'client';
+  role?: string;
   created_at: string;
 }
 
