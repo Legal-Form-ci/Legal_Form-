@@ -102,7 +102,7 @@ const Contact = () => {
       title: t('form.email'),
       details: [
         "contact@legalform.ci",
-        "entreprise@legalform.ci"
+        "monentreprise@legalform.ci"
       ]
     },
     {

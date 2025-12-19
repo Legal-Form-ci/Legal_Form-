@@ -113,7 +113,7 @@ const Footer = () => {
                 <Mail className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-muted-foreground">
                   <div>contact@legalform.ci</div>
-                  <div>entreprise@legalform.ci</div>
+                  <div>monentreprise@legalform.ci</div>
                 </div>
               </li>
               <li className="flex items-start space-x-3">
