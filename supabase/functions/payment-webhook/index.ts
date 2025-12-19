@@ -135,7 +135,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (newStatus === 'payment_confirmed') {
       const { data: request } = await supabase
         .from(tableName)
-        .select('email, contact_name, tracking_number')
+        .select('email, contact_name')
         .eq('id', requestId)
         .single();
 
@@ -169,7 +169,7 @@ const handler = async (req: Request): Promise<Response> => {
                     <div class="content">
                       <p>Bonjour <strong>${request.contact_name}</strong>,</p>
                       <p>Nous avons bien reçu votre paiement et sommes ravis de vous accompagner dans votre projet.</p>
-                      <p><strong>📋 Numéro de suivi :</strong> <code style="background: #e0e0e0; padding: 5px 10px; border-radius: 3px;">${request.tracking_number || requestId}</code></p>
+                      <p><strong>📋 Numéro de suivi :</strong> <code style="background: #e0e0e0; padding: 5px 10px; border-radius: 3px;">${requestId.slice(0, 8).toUpperCase()}</code></p>
                       <p>Notre équipe va maintenant traiter votre dossier dans les plus brefs délais. Vous recevrez une notification à chaque étape importante.</p>
                       <p>Vous pouvez suivre l'avancement de votre dossier à tout moment sur notre plateforme.</p>
                       <div class="footer">

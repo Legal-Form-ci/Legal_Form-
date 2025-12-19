@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.lexia-chat]
 verify_jwt = false
+
+[functions.notify-id-validation]
+verify_jwt = true
