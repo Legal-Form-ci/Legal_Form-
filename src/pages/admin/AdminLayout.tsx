@@ -52,6 +52,7 @@ const AdminLayout = ({ children }: { children?: React.ReactNode }) => {
     { label: "Créations d'entreprise", href: "/admin/companies", icon: Building2 },
     { label: "Demandes de services", href: "/admin/services", icon: Briefcase },
     { label: "Tickets", href: "/admin/tickets", icon: MessageSquare, badge: 3 },
+    { label: "Conversations LexIA", href: "/admin/lexia", icon: MessageSquare },
     { label: "Paiements", href: "/admin/payments", icon: CreditCard },
     { label: "Témoignages", href: "/admin/testimonials", icon: Star },
     { label: "Utilisateurs internes", href: "/admin/team", icon: Users },

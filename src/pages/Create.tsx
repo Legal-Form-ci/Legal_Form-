@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Building2, MapPin, FileText, CheckCircle2, Users, UserCircle, Plus, Trash2 } from "lucide-react";
+import { Building2, MapPin, FileText, CheckCircle2, Users, UserCircle, Plus, Trash2, IdCard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import IdentityDocumentUpload from "@/components/IdentityDocumentUpload";
 
 interface Associate {
   id: string;
@@ -86,6 +87,13 @@ const Create = () => {
   
   // Step 5: Additional services
   const [additionalServices, setAdditionalServices] = useState<string[]>([]);
+  
+  // Identity document data
+  const [identityData, setIdentityData] = useState<{
+    frontUrl?: string;
+    backUrl?: string;
+    faceDetected: boolean;
+  } | null>(null);
   
   const { user, loading } = useAuth();
   const { toast } = useToast();
@@ -599,9 +607,25 @@ const Create = () => {
                     </div>
                   )}
                   
-                  <p className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
-                    <strong>NB:</strong> {t('create.documentsNote', 'La CNI, l\'extrait de naissance et le casier judiciaire seront fournis ultérieurement en version physique.')}
-                  </p>
+                  {/* Identity Document Upload */}
+                  <div className="pt-4 border-t">
+                    <div className="flex items-center gap-2 mb-4">
+                      <IdCard className="h-5 w-5 text-primary" />
+                      <h3 className="font-semibold">{t('create.identityDocument', 'Pièce d\'identité du gérant')}</h3>
+                    </div>
+                    <IdentityDocumentUpload
+                      standalone={true}
+                      onComplete={(data) => {
+                        setIdentityData(data);
+                      }}
+                    />
+                    {identityData && (
+                      <p className="text-sm text-green-600 mt-2 flex items-center gap-1">
+                        <CheckCircle2 className="h-4 w-4" />
+                        Document enregistré {identityData.faceDetected ? '(visage détecté)' : ''}
+                      </p>
+                    )}
+                  </div>
                 </div>
               )}
 

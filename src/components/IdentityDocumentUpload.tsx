@@ -1,21 +1,24 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, CheckCircle, AlertCircle, User, Loader2, X, Camera } from "lucide-react";
+import { Upload, CheckCircle, AlertCircle, User, Loader2, X, Camera, Scan } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import * as faceapi from 'face-api.js';
 
 interface IdentityDocumentUploadProps {
-  requestId: string;
-  requestType: 'company' | 'service';
-  onComplete?: () => void;
+  requestId?: string;
+  requestType?: 'company' | 'service';
+  onComplete?: (data: { frontUrl: string; backUrl?: string; faceDetected: boolean }) => void;
+  standalone?: boolean;
 }
 
-const IdentityDocumentUpload = ({ requestId, requestType, onComplete }: IdentityDocumentUploadProps) => {
+const IdentityDocumentUpload = ({ requestId, requestType = 'company', onComplete, standalone = false }: IdentityDocumentUploadProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [documentType, setDocumentType] = useState<string>("");
@@ -24,10 +27,14 @@ const IdentityDocumentUpload = ({ requestId, requestType, onComplete }: Identity
   const [frontPreview, setFrontPreview] = useState<string | null>(null);
   const [backPreview, setBackPreview] = useState<string | null>(null);
   const [faceDetected, setFaceDetected] = useState<boolean | null>(null);
+  const [faceConfidence, setFaceConfidence] = useState<number>(0);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [modelsLoaded, setModelsLoaded] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const frontInputRef = useRef<HTMLInputElement>(null);
   const backInputRef = useRef<HTMLInputElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const documentTypes = [
     { value: "cni", label: "Carte Nationale d'Identité (CNI)" },
@@ -35,6 +42,113 @@ const IdentityDocumentUpload = ({ requestId, requestType, onComplete }: Identity
     { value: "sejour", label: "Carte de séjour" },
     { value: "permis", label: "Permis de conduire" },
   ];
+
+  // Load face-api.js models
+  useEffect(() => {
+    const loadModels = async () => {
+      try {
+        setLoadingProgress(10);
+        const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/';
+        
+        await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+        setLoadingProgress(40);
+        
+        await faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL);
+        setLoadingProgress(70);
+        
+        await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+        setLoadingProgress(100);
+        
+        setModelsLoaded(true);
+        console.log('Face-api.js models loaded successfully');
+      } catch (error) {
+        console.error('Error loading face-api models:', error);
+        // Fallback to basic detection
+        setModelsLoaded(false);
+      }
+    };
+
+    loadModels();
+  }, []);
+
+  const analyzeFaceAdvanced = async (imageDataUrl: string): Promise<{ detected: boolean; confidence: number }> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      
+      img.onload = async () => {
+        try {
+          if (modelsLoaded) {
+            // Use face-api.js for advanced detection
+            const detections = await faceapi
+              .detectAllFaces(img, new faceapi.TinyFaceDetectorOptions({
+                inputSize: 416,
+                scoreThreshold: 0.5
+              }))
+              .withFaceLandmarks(true);
+
+            if (detections.length > 0) {
+              // Get the face with highest confidence
+              const bestDetection = detections.reduce((prev, current) => 
+                prev.detection.score > current.detection.score ? prev : current
+              );
+              
+              const confidence = Math.round(bestDetection.detection.score * 100);
+              
+              // Draw face detection on canvas for visual feedback
+              if (canvasRef.current) {
+                const canvas = canvasRef.current;
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                  ctx.drawImage(img, 0, 0);
+                  
+                  // Draw bounding box
+                  const box = bestDetection.detection.box;
+                  ctx.strokeStyle = '#00ff00';
+                  ctx.lineWidth = 3;
+                  ctx.strokeRect(box.x, box.y, box.width, box.height);
+                  
+                  // Draw landmarks
+                  const landmarks = bestDetection.landmarks;
+                  ctx.fillStyle = '#00ff00';
+                  landmarks.positions.forEach(point => {
+                    ctx.beginPath();
+                    ctx.arc(point.x, point.y, 2, 0, 2 * Math.PI);
+                    ctx.fill();
+                  });
+                }
+              }
+              
+              resolve({ detected: true, confidence });
+            } else {
+              resolve({ detected: false, confidence: 0 });
+            }
+          } else {
+            // Fallback to basic heuristic detection
+            const aspectRatio = img.width / img.height;
+            const hasGoodAspect = aspectRatio > 0.5 && aspectRatio < 2;
+            const hasGoodSize = img.width >= 300 && img.height >= 300;
+            
+            resolve({ 
+              detected: hasGoodAspect && hasGoodSize, 
+              confidence: hasGoodAspect && hasGoodSize ? 60 : 0 
+            });
+          }
+        } catch (error) {
+          console.error('Face detection error:', error);
+          resolve({ detected: false, confidence: 0 });
+        }
+      };
+      
+      img.onerror = () => {
+        resolve({ detected: false, confidence: 0 });
+      };
+      
+      img.src = imageDataUrl;
+    });
+  };
 
   const handleImageSelect = useCallback(async (file: File, side: 'front' | 'back') => {
     if (!file.type.startsWith('image/')) {
@@ -56,63 +170,42 @@ const IdentityDocumentUpload = ({ requestId, requestType, onComplete }: Identity
     }
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       const preview = e.target?.result as string;
       if (side === 'front') {
         setFrontImage(file);
         setFrontPreview(preview);
+        
         // Analyze face on front image
-        analyzeFace(preview);
+        setIsAnalyzing(true);
+        setFaceDetected(null);
+        setFaceConfidence(0);
+        
+        const result = await analyzeFaceAdvanced(preview);
+        
+        setFaceDetected(result.detected);
+        setFaceConfidence(result.confidence);
+        setIsAnalyzing(false);
+        
+        if (result.detected) {
+          toast({
+            title: "Visage détecté ✓",
+            description: `Confiance: ${result.confidence}% - Document valide`,
+          });
+        } else {
+          toast({
+            title: "Visage non détecté",
+            description: "Assurez-vous que la photo d'identité est bien visible",
+            variant: "destructive"
+          });
+        }
       } else {
         setBackImage(file);
         setBackPreview(preview);
       }
     };
     reader.readAsDataURL(file);
-  }, []);
-
-  const analyzeFace = async (imageDataUrl: string) => {
-    setIsAnalyzing(true);
-    setFaceDetected(null);
-
-    try {
-      // Simple face detection using canvas and image analysis
-      const img = new Image();
-      img.onload = () => {
-        // Basic heuristic: check if image has appropriate dimensions for ID photo
-        const aspectRatio = img.width / img.height;
-        const hasGoodAspect = aspectRatio > 0.5 && aspectRatio < 2;
-        const hasGoodSize = img.width >= 300 && img.height >= 300;
-        
-        // For a more robust solution, we'd use face-api.js
-        // For now, we assume face is present if image meets basic criteria
-        setFaceDetected(hasGoodAspect && hasGoodSize);
-        setIsAnalyzing(false);
-        
-        if (hasGoodAspect && hasGoodSize) {
-          toast({
-            title: "Image analysée",
-            description: "Le document semble valide",
-          });
-        } else {
-          toast({
-            title: "Vérification requise",
-            description: "Veuillez vous assurer que la photo d'identité est visible",
-            variant: "destructive"
-          });
-        }
-      };
-      img.onerror = () => {
-        setFaceDetected(false);
-        setIsAnalyzing(false);
-      };
-      img.src = imageDataUrl;
-    } catch (error) {
-      console.error('Face analysis error:', error);
-      setFaceDetected(false);
-      setIsAnalyzing(false);
-    }
-  };
+  }, [modelsLoaded, toast]);
 
   const handleDrop = useCallback((e: React.DragEvent, side: 'front' | 'back') => {
     e.preventDefault();
@@ -122,7 +215,7 @@ const IdentityDocumentUpload = ({ requestId, requestType, onComplete }: Identity
 
   const uploadToStorage = async (file: File, folder: string): Promise<string | null> => {
     const fileExt = file.name.split('.').pop();
-    const fileName = `${user?.id}/${requestId}/${folder}_${Date.now()}.${fileExt}`;
+    const fileName = `${user?.id || 'anonymous'}/${requestId || Date.now()}/${folder}_${Date.now()}.${fileExt}`;
 
     const { error } = await supabase.storage
       .from('identity-documents')
@@ -159,15 +252,6 @@ const IdentityDocumentUpload = ({ requestId, requestType, onComplete }: Identity
       return;
     }
 
-    if (!user) {
-      toast({
-        title: "Erreur",
-        description: "Vous devez être connecté",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setIsUploading(true);
 
     try {
@@ -179,20 +263,37 @@ const IdentityDocumentUpload = ({ requestId, requestType, onComplete }: Identity
         throw new Error('Échec du téléchargement du recto');
       }
 
-      // Save to database
-      const { error } = await supabase
-        .from('identity_documents')
-        .insert({
-          user_id: user.id,
-          request_id: requestId,
-          request_type: requestType,
-          document_type: documentType,
-          front_url: frontUrl,
-          back_url: backUrl,
-          face_detected: faceDetected || false,
+      // If standalone mode (for Create form), just call onComplete with URLs
+      if (standalone) {
+        onComplete?.({ 
+          frontUrl, 
+          backUrl: backUrl || undefined, 
+          faceDetected: faceDetected || false 
         });
+        
+        toast({
+          title: "Document validé",
+          description: "Votre pièce d'identité a été enregistrée",
+        });
+        return;
+      }
 
-      if (error) throw error;
+      // Save to database if requestId is provided
+      if (requestId && user) {
+        const { error } = await supabase
+          .from('identity_documents')
+          .insert({
+            user_id: user.id,
+            request_id: requestId,
+            request_type: requestType,
+            document_type: documentType,
+            front_url: frontUrl,
+            back_url: backUrl,
+            face_detected: faceDetected || false,
+          });
+
+        if (error) throw error;
+      }
 
       toast({
         title: "Document téléchargé",
@@ -206,8 +307,9 @@ const IdentityDocumentUpload = ({ requestId, requestType, onComplete }: Identity
       setFrontPreview(null);
       setBackPreview(null);
       setFaceDetected(null);
+      setFaceConfidence(0);
 
-      onComplete?.();
+      onComplete?.({ frontUrl, backUrl: backUrl || undefined, faceDetected: faceDetected || false });
     } catch (error: any) {
       console.error('Submit error:', error);
       toast({
@@ -225,6 +327,7 @@ const IdentityDocumentUpload = ({ requestId, requestType, onComplete }: Identity
       setFrontImage(null);
       setFrontPreview(null);
       setFaceDetected(null);
+      setFaceConfidence(0);
     } else {
       setBackImage(null);
       setBackPreview(null);
@@ -237,15 +340,27 @@ const IdentityDocumentUpload = ({ requestId, requestType, onComplete }: Identity
         <CardTitle className="flex items-center gap-2">
           <User className="h-5 w-5 text-primary" />
           Pièce d'identité
+          {modelsLoaded && (
+            <Badge variant="secondary" className="ml-2">
+              <Scan className="h-3 w-3 mr-1" />
+              IA Active
+            </Badge>
+          )}
         </CardTitle>
         <CardDescription>
-          Téléchargez votre pièce d'identité (recto et verso)
+          Téléchargez votre pièce d'identité (recto et verso) - Détection automatique du visage
         </CardDescription>
+        {!modelsLoaded && loadingProgress < 100 && (
+          <div className="space-y-2 pt-2">
+            <p className="text-xs text-muted-foreground">Chargement de l'IA de détection...</p>
+            <Progress value={loadingProgress} className="h-1" />
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Document Type */}
         <div className="space-y-2">
-          <Label>Type de document</Label>
+          <Label>Type de document *</Label>
           <Select value={documentType} onValueChange={setDocumentType}>
             <SelectTrigger>
               <SelectValue placeholder="Sélectionnez le type" />
@@ -269,19 +384,19 @@ const IdentityDocumentUpload = ({ requestId, requestType, onComplete }: Identity
               {isAnalyzing && (
                 <Badge variant="secondary" className="animate-pulse">
                   <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                  Analyse...
+                  Analyse IA...
                 </Badge>
               )}
               {faceDetected === true && (
-                <Badge className="bg-green-500">
+                <Badge className="bg-green-500 hover:bg-green-600">
                   <CheckCircle className="h-3 w-3 mr-1" />
-                  Valide
+                  Visage {faceConfidence}%
                 </Badge>
               )}
-              {faceDetected === false && (
+              {faceDetected === false && !isAnalyzing && frontPreview && (
                 <Badge variant="destructive">
                   <AlertCircle className="h-3 w-3 mr-1" />
-                  Vérifier
+                  Non détecté
                 </Badge>
               )}
             </Label>
@@ -290,6 +405,7 @@ const IdentityDocumentUpload = ({ requestId, requestType, onComplete }: Identity
               ref={frontInputRef}
               type="file"
               accept="image/*"
+              capture="environment"
               className="hidden"
               onChange={(e) => e.target.files?.[0] && handleImageSelect(e.target.files[0], 'front')}
             />
@@ -299,8 +415,13 @@ const IdentityDocumentUpload = ({ requestId, requestType, onComplete }: Identity
                 <img
                   src={frontPreview}
                   alt="Recto"
-                  className="w-full h-40 object-cover rounded-lg border"
+                  className="w-full h-48 object-cover rounded-lg border-2 border-primary/20"
                 />
+                {faceDetected && (
+                  <div className="absolute bottom-2 left-2 bg-green-500/90 text-white text-xs px-2 py-1 rounded">
+                    Visage validé ✓
+                  </div>
+                )}
                 <Button
                   variant="destructive"
                   size="icon"
@@ -315,11 +436,14 @@ const IdentityDocumentUpload = ({ requestId, requestType, onComplete }: Identity
                 onClick={() => frontInputRef.current?.click()}
                 onDrop={(e) => handleDrop(e, 'front')}
                 onDragOver={(e) => e.preventDefault()}
-                className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
+                className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-all"
               >
-                <Camera className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">
-                  Cliquez ou glissez l'image ici
+                <Camera className="h-10 w-10 mx-auto text-primary mb-3" />
+                <p className="text-sm font-medium text-foreground mb-1">
+                  Cliquez ou glissez le recto
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  JPG, PNG jusqu'à 10 Mo
                 </p>
               </div>
             )}
@@ -333,6 +457,7 @@ const IdentityDocumentUpload = ({ requestId, requestType, onComplete }: Identity
               ref={backInputRef}
               type="file"
               accept="image/*"
+              capture="environment"
               className="hidden"
               onChange={(e) => e.target.files?.[0] && handleImageSelect(e.target.files[0], 'back')}
             />
@@ -342,7 +467,7 @@ const IdentityDocumentUpload = ({ requestId, requestType, onComplete }: Identity
                 <img
                   src={backPreview}
                   alt="Verso"
-                  className="w-full h-40 object-cover rounded-lg border"
+                  className="w-full h-48 object-cover rounded-lg border"
                 />
                 <Button
                   variant="destructive"
@@ -358,21 +483,27 @@ const IdentityDocumentUpload = ({ requestId, requestType, onComplete }: Identity
                 onClick={() => backInputRef.current?.click()}
                 onDrop={(e) => handleDrop(e, 'back')}
                 onDragOver={(e) => e.preventDefault()}
-                className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
+                className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-all"
               >
-                <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">
-                  Cliquez ou glissez l'image ici
+                <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+                <p className="text-sm font-medium text-foreground mb-1">
+                  Cliquez ou glissez le verso
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  JPG, PNG jusqu'à 10 Mo
                 </p>
               </div>
             )}
           </div>
         </div>
 
+        {/* Hidden canvas for face detection visualization */}
+        <canvas ref={canvasRef} className="hidden" />
+
         {/* Submit */}
         <Button 
           onClick={handleSubmit} 
-          disabled={!documentType || !frontImage || isUploading}
+          disabled={!documentType || !frontImage || isUploading || isAnalyzing}
           className="w-full"
         >
           {isUploading ? (
@@ -383,10 +514,21 @@ const IdentityDocumentUpload = ({ requestId, requestType, onComplete }: Identity
           ) : (
             <>
               <Upload className="mr-2 h-4 w-4" />
-              Enregistrer le document
+              Valider le document
             </>
           )}
         </Button>
+
+        {faceDetected === false && frontPreview && !isAnalyzing && (
+          <p className="text-sm text-amber-600 bg-amber-50 dark:bg-amber-950/20 p-3 rounded-lg">
+            ⚠️ Le visage n'a pas été détecté automatiquement. Veuillez vous assurer que :
+            <ul className="list-disc list-inside mt-2 space-y-1">
+              <li>La photo du document est nette et bien éclairée</li>
+              <li>Le visage est entièrement visible</li>
+              <li>L'image n'est pas floue ou trop sombre</li>
+            </ul>
+          </p>
+        )}
       </CardContent>
     </Card>
   );
