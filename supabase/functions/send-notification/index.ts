@@ -133,7 +133,7 @@ Deno.serve(async (req) => {
             </p>
             <p style="color: #6c757d; font-size: 14px; margin-top: 30px;">
               Pour toute question, contactez-nous:<br>
-              📧 entreprise@legalform.ci<br>
+              📧 monentreprise@legalform.ci<br>
               📱 +225 07 09 67 79 25
             </p>
           </div>
@@ -152,7 +152,7 @@ Deno.serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'LegalForm <entreprise@legalform.ci>',
+            from: 'LegalForm <monentreprise@legalform.ci>',
             to: [clientEmail],
             subject: emailSubject,
             html: emailHtml,
