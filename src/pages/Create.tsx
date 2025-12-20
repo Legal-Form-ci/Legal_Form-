@@ -114,8 +114,6 @@ const Create = () => {
     { value: "ei", label: "Entreprise Individuelle" },
     { value: "sarl", label: "SARL - Société à Responsabilité Limitée" },
     { value: "sarlu", label: "SARLU - Société à Responsabilité Limitée Unipersonnelle" },
-    { value: "sas", label: "SAS - Société par Actions Simplifiée" },
-    { value: "sasu", label: "SASU - Société par Actions Simplifiée Unipersonnelle" },
     { value: "filiale", label: "Filiale" },
     { value: "ong", label: "ONG - Organisation Non Gouvernementale" },
     { value: "association", label: "Association" },

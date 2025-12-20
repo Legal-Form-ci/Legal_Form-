@@ -16,7 +16,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.create-super-admin]
-verify_jwt = true
+verify_jwt = false
 
 [functions.secure-public-tracking]
 verify_jwt = false
@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.notify-id-validation]
 verify_jwt = true
+
+[functions.delete-admin-user]
+verify_jwt = false

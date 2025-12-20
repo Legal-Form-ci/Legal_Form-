@@ -32,6 +32,7 @@ import Analytics from "./pages/admin/Analytics";
 import InitialSetup from "./pages/admin/InitialSetup";
 import LexIAConversations from "./pages/admin/LexIAConversations";
 import IdentityDocuments from "./pages/admin/IdentityDocuments";
+import InvoiceGenerator from "./pages/admin/InvoiceGenerator";
 import ClientDashboard from "./pages/client/Dashboard";
 import AdditionalServices from "./pages/AdditionalServices";
 import ServiceRequest from "./pages/ServiceRequest";
@@ -107,6 +108,7 @@ const App = () => (
           <Route path="/admin/analytics" element={<Analytics />} />
           <Route path="/admin/lexia" element={<LexIAConversations />} />
           <Route path="/admin/identity-documents" element={<IdentityDocuments />} />
+          <Route path="/admin/invoices" element={<InvoiceGenerator />} />
           <Route path="/admin/services" element={<CompaniesManagement />} />
           <Route path="/client/dashboard" element={<ClientDashboard />} />
           <Route path="/mon-espace" element={<ClientDashboard />} />

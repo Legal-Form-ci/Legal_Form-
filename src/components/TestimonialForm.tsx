@@ -51,8 +51,6 @@ const TestimonialForm = ({ onSuccess }: TestimonialFormProps) => {
   const companyTypes = [
     { value: "sarl", label: "SARL" },
     { value: "sarlu", label: "SARLU" },
-    { value: "sas", label: "SAS" },
-    { value: "sasu", label: "SASU" },
     { value: "ei", label: "Entreprise Individuelle" },
     { value: "association", label: "Association" },
     { value: "ong", label: "ONG" },
