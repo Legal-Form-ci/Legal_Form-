@@ -17,8 +17,8 @@ const Index = () => {
       description: t('home.services.creation.desc', 'De l\'idée au lancement opérationnel'),
       items: [
         "Entreprise Individuelle, SARL, SARLU",
-        "SAS, SASU, Filiale",
         "Association, ONG, Fondation",
+        "SCOOPS, SCI, GIE",
         "SCOOPS, SCI, GIE"
       ],
     },
