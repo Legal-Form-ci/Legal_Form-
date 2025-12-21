@@ -172,6 +172,9 @@ const Create = () => {
   };
 
   const handleSubmit = async () => {
+    // Prevent double submission
+    if (isSubmitting) return;
+    
     if (!user) {
       toast({ title: "Erreur", description: "Vous devez être connecté", variant: "destructive" });
       return;

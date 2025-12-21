@@ -107,7 +107,7 @@ export const useAuth = () => {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -125,6 +125,25 @@ export const useAuth = () => {
       title: "Connexion réussie",
       description: "Bienvenue !",
     });
+    
+    // Fetch user role and redirect immediately
+    if (data.user) {
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', data.user.id)
+        .maybeSingle();
+      
+      const role = roleData?.role || 'client';
+      setUserRole(role);
+      
+      // Redirect based on role
+      if (role === 'admin' || role === 'team') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/client/dashboard');
+      }
+    }
     
     return { error: null };
   };
