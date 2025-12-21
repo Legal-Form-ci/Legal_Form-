@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import * as React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -56,7 +56,7 @@ const queryClient = new QueryClient();
 const PageViewTracker = () => {
   const location = useLocation();
 
-  useEffect(() => {
+  React.useEffect(() => {
     logPageView(location.pathname + location.search);
   }, [location]);
 

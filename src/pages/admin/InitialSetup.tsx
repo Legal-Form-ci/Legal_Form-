@@ -1,4 +1,4 @@
-import { useState } from "react";
+import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -11,8 +11,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 const InitialSetup = () => {
-  const [isCreating, setIsCreating] = useState(false);
-  const [formData, setFormData] = useState({
+  const [isCreating, setIsCreating] = React.useState(false);
+  const [formData, setFormData] = React.useState({
     email: "",
     password: "",
     confirmPassword: "",
