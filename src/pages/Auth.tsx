@@ -22,7 +22,7 @@ const Auth = () => {
 
   useEffect(() => {
     if (user && userRole) {
-      if (userRole === 'admin') {
+      if (userRole === 'admin' || userRole === 'team') {
         navigate("/admin/dashboard");
       } else {
         navigate("/client/dashboard");
