@@ -52,7 +52,7 @@ const AdminLayout = ({ children }: { children?: React.ReactNode }) => {
     { label: "Créations d'entreprise", href: "/admin/companies", icon: Building2 },
     { label: "Demandes de services", href: "/admin/services", icon: Briefcase },
     { label: "Tickets", href: "/admin/tickets", icon: MessageSquare, badge: 3 },
-    { label: "Conversations LexiPro", href: "/admin/lexia", icon: MessageSquare },
+    { label: "Conversations Legal Pro", href: "/admin/lexia", icon: MessageSquare },
     { label: "Documents ID", href: "/admin/identity-documents", icon: FileText },
     { label: "Factures", href: "/admin/invoices", icon: FileText },
     { label: "Paiements", href: "/admin/payments", icon: CreditCard },

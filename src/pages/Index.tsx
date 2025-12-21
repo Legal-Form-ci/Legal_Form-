@@ -111,9 +111,9 @@ const Index = () => {
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden">
         <div 
-          className="absolute inset-0 bg-gradient-hero opacity-95"
+          className="absolute inset-0 bg-gradient-hero"
           style={{
-            backgroundImage: `linear-gradient(135deg, rgba(23, 162, 184, 0.95) 0%, rgba(17, 128, 145, 0.95) 100%), url(${heroBackground})`,
+            backgroundImage: `linear-gradient(135deg, hsl(179 100% 24% / 0.95) 0%, hsl(179 100% 18% / 0.95) 100%), url(${heroBackground})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}
