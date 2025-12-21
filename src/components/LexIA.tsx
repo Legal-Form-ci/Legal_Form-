@@ -56,7 +56,7 @@ const LexIA = () => {
       setMessages([{
         id: '1',
         role: 'assistant',
-        content: "Bonjour ! Je suis LexiPro AI, votre assistant virtuel expert Legal Form. 🏢\n\nJe suis là pour vous aider avec:\n• La création d'entreprise en Côte d'Ivoire\n• Les formalités administratives\n• Les questions juridiques courantes\n• Les tarifs et délais\n\nComment puis-je vous aider aujourd'hui ?",
+        content: "Bonjour ! Je suis Legal Pro, votre assistant virtuel expert Legal Form. 🏢\n\nJe suis là pour vous aider avec:\n• La création d'entreprise en Côte d'Ivoire\n• Les formalités administratives\n• Les questions juridiques courantes\n• Les tarifs et délais\n\nComment puis-je vous aider aujourd'hui ?",
         timestamp: new Date()
       }]);
     } catch (error) {
@@ -156,8 +156,8 @@ const LexIA = () => {
                   <Bot className="h-5 w-5" />
                 </div>
                 <div>
-                  <CardTitle className="text-base">LexiPro AI</CardTitle>
-                  <p className="text-xs text-primary-foreground/80">Expert Legal Form</p>
+                  <CardTitle className="text-base">Legal Pro</CardTitle>
+                  <p className="text-xs text-primary-foreground/80">Assistant Legal Form</p>
                 </div>
               </div>
               <Button
