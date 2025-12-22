@@ -152,6 +152,7 @@ export type Database = {
           sigle: string | null
           status: string
           structure_type: string
+          tracking_number: string | null
           updated_at: string
           user_id: string
         }
@@ -185,6 +186,7 @@ export type Database = {
           sigle?: string | null
           status?: string
           structure_type: string
+          tracking_number?: string | null
           updated_at?: string
           user_id: string
         }
@@ -218,6 +220,7 @@ export type Database = {
           sigle?: string | null
           status?: string
           structure_type?: string
+          tracking_number?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -497,6 +500,38 @@ export type Database = {
           },
         ]
       }
+      payment_logs: {
+        Row: {
+          created_at: string
+          event_data: Json | null
+          event_type: string
+          id: string
+          payment_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          payment_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          payment_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_logs_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
@@ -511,6 +546,7 @@ export type Database = {
           request_id: string | null
           request_type: string | null
           status: string
+          tracking_number: string | null
           transaction_id: string | null
           updated_at: string
           user_id: string | null
@@ -528,6 +564,7 @@ export type Database = {
           request_id?: string | null
           request_type?: string | null
           status?: string
+          tracking_number?: string | null
           transaction_id?: string | null
           updated_at?: string
           user_id?: string | null
@@ -545,6 +582,7 @@ export type Database = {
           request_id?: string | null
           request_type?: string | null
           status?: string
+          tracking_number?: string | null
           transaction_id?: string | null
           updated_at?: string
           user_id?: string | null
@@ -674,6 +712,7 @@ export type Database = {
           service_category: string | null
           service_type: string
           status: string
+          tracking_number: string | null
           updated_at: string
           user_id: string
         }
@@ -694,6 +733,7 @@ export type Database = {
           service_category?: string | null
           service_type: string
           status?: string
+          tracking_number?: string | null
           updated_at?: string
           user_id: string
         }
@@ -714,6 +754,7 @@ export type Database = {
           service_category?: string | null
           service_type?: string
           status?: string
+          tracking_number?: string | null
           updated_at?: string
           user_id?: string
         }
