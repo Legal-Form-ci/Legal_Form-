@@ -234,12 +234,13 @@ const Create = () => {
         return;
       }
 
-      // Initiate payment
+      // Initiate payment with requestType: 'company'
       const { data: paymentData, error: paymentError } = await supabase.functions.invoke('create-payment', {
         body: {
           amount: estimatedPrice,
           description: `Création ${companyData.structureType.toUpperCase()} - ${companyData.companyName || 'Sans nom'}`,
           requestId: requestData.id,
+          requestType: 'company',
           customerEmail: managerData.email,
           customerName: managerData.fullName,
           customerPhone: managerData.phone

@@ -702,6 +702,9 @@ export type Database = {
           closed_at: string | null
           closed_by: string | null
           company_name: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
           created_at: string
           description: string | null
           documents: Json | null
@@ -710,6 +713,7 @@ export type Database = {
           payment_id: string | null
           payment_status: string | null
           service_category: string | null
+          service_details: Json | null
           service_type: string
           status: string
           tracking_number: string | null
@@ -723,6 +727,9 @@ export type Database = {
           closed_at?: string | null
           closed_by?: string | null
           company_name?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
           created_at?: string
           description?: string | null
           documents?: Json | null
@@ -731,6 +738,7 @@ export type Database = {
           payment_id?: string | null
           payment_status?: string | null
           service_category?: string | null
+          service_details?: Json | null
           service_type: string
           status?: string
           tracking_number?: string | null
@@ -744,6 +752,9 @@ export type Database = {
           closed_at?: string | null
           closed_by?: string | null
           company_name?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
           created_at?: string
           description?: string | null
           documents?: Json | null
@@ -752,6 +763,7 @@ export type Database = {
           payment_id?: string | null
           payment_status?: string | null
           service_category?: string | null
+          service_details?: Json | null
           service_type?: string
           status?: string
           tracking_number?: string | null

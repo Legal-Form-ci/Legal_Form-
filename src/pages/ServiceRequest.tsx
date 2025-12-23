@@ -95,16 +95,18 @@ const ServiceRequest = () => {
     setIsSubmitting(true);
 
     try {
-      // Create service request
+      // Create service request with correct column names
       const { data: requestData, error: requestError } = await supabase
         .from('service_requests')
         .insert({
           user_id: user.id,
           service_type: serviceParam,
+          service_category: serviceParam,
           contact_name: contactData.contact_name,
-          phone: contactData.phone,
-          email: contactData.email,
-          company_name: serviceDetails.company_name || serviceDetails.project_name || serviceDetails.brand_name,
+          contact_phone: contactData.phone,
+          contact_email: contactData.email,
+          company_name: serviceDetails.company_name || serviceDetails.project_name || serviceDetails.brand_name || null,
+          description: `Service: ${selectedServiceInfo.label}`,
           service_details: serviceDetails,
           estimated_price: selectedServiceInfo.price,
           status: selectedServiceInfo.isQuote ? 'pending_quote' : 'pending',
@@ -112,7 +114,10 @@ const ServiceRequest = () => {
         .select()
         .single();
 
-      if (requestError) throw requestError;
+      if (requestError) {
+        console.error('Erreur création demande:', requestError);
+        throw new Error(requestError.message);
+      }
 
       // If it's a quote service, don't initiate payment
       if (selectedServiceInfo.isQuote) {

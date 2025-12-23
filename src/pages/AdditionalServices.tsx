@@ -87,37 +87,47 @@ const AdditionalServices = () => {
     try {
       const selectedServiceInfo = services.find(s => s.value === selectedService);
       
-      // Create service request
+      // Create service request with correct column names
       const { data: requestData, error: requestError } = await supabase
         .from('service_requests')
         .insert({
           user_id: user.id,
           service_type: selectedService,
+          service_category: 'additional',
           contact_name: contactData.contact_name,
-          phone: contactData.phone,
-          email: contactData.email,
-          company_name: serviceDetails.company_name,
+          contact_phone: contactData.phone,
+          contact_email: contactData.email,
+          company_name: serviceDetails.company_name || null,
+          description: `Service: ${selectedServiceInfo?.label}`,
           service_details: serviceDetails,
           estimated_price: selectedServiceInfo?.price || 25000,
+          status: 'pending',
         })
         .select()
         .single();
 
-      if (requestError) throw requestError;
+      if (requestError) {
+        console.error('Erreur création demande:', requestError);
+        throw new Error(requestError.message);
+      }
 
-      // Initiate payment
+      // Initiate payment with requestType: 'service'
       const { data: paymentData, error: paymentError } = await supabase.functions.invoke('create-payment', {
         body: {
           amount: selectedServiceInfo?.price || 25000,
           description: `Service: ${selectedServiceInfo?.label}`,
           requestId: requestData.id,
+          requestType: 'service',
           customerEmail: contactData.email,
           customerName: contactData.contact_name,
           customerPhone: contactData.phone
         }
       });
 
-      if (paymentError) throw paymentError;
+      if (paymentError) {
+        console.error('Erreur paiement:', paymentError);
+        throw new Error(paymentError.message || 'Erreur lors de la création du paiement');
+      }
 
       toast({
         title: "Demande enregistrée",
