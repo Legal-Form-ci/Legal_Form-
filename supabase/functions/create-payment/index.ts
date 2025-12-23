@@ -167,8 +167,12 @@ const handler = async (req: Request): Promise<Response> => {
       : 'https://sandbox-api.fedapay.com';
 
     console.log('Using FedaPay URL:', fedapayBaseUrl);
+    console.log('API key prefix:', fedapaySecretKey.substring(0, 10));
 
-    // Create FedaPay transaction
+    // Get the app URL for redirects
+    const appUrl = Deno.env.get('APP_URL') || 'https://wpczgwxsriezaubncuom.lovableproject.com';
+
+    // Create FedaPay transaction with proper structure
     const transactionPayload = {
       description: description || `Paiement Legal Form - ${request.tracking_number || requestId}`,
       amount: Math.round(amount),
@@ -178,17 +182,18 @@ const handler = async (req: Request): Promise<Response> => {
       callback_url: `${supabaseUrl}/functions/v1/payment-webhook`,
       customer: {
         firstname: customerName.split(' ')[0] || customerName,
-        lastname: customerName.split(' ').slice(1).join(' ') || '-',
+        lastname: customerName.split(' ').slice(1).join(' ') || customerName,
         email: customerEmail,
         phone_number: cleanPhone ? {
           number: cleanPhone,
-          country: 'BJ'
+          country: 'CI'
         } : undefined
       },
       metadata: {
         request_id: requestId,
         request_type: requestType,
-        tracking_number: request.tracking_number || ''
+        tracking_number: request.tracking_number || '',
+        user_id: user.id
       }
     };
 

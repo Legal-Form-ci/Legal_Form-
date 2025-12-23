@@ -244,20 +244,44 @@ const handler = async (req: Request): Promise<Response> => {
       // Send confirmation email if payment is confirmed
       if (paymentStatus === 'completed') {
         try {
-          const { data: request } = await supabase
-            .from(tableName)
-            .select('email, contact_name, tracking_number, company_name')
-            .eq('id', requestId)
-            .maybeSingle();
-
-          if (request && request.email) {
-            console.log(`Sending payment confirmation email to: ${request.email}`);
+          let email = '';
+          let contactName = '';
+          let requestTrackingNumber = '';
+          let companyName = '';
+          
+          // Fetch request data based on type
+          if (requestType === 'service') {
+            const { data: serviceReq } = await supabase
+              .from('service_requests')
+              .select('contact_email, contact_name, tracking_number, company_name')
+              .eq('id', requestId)
+              .maybeSingle();
             
-            const displayTrackingNumber = request.tracking_number || trackingNumber || requestId.slice(0, 8).toUpperCase();
+            email = serviceReq?.contact_email || '';
+            contactName = serviceReq?.contact_name || '';
+            requestTrackingNumber = serviceReq?.tracking_number || '';
+            companyName = serviceReq?.company_name || '';
+          } else {
+            const { data: companyReq } = await supabase
+              .from('company_requests')
+              .select('email, contact_name, tracking_number, company_name')
+              .eq('id', requestId)
+              .maybeSingle();
+            
+            email = companyReq?.email || '';
+            contactName = companyReq?.contact_name || '';
+            requestTrackingNumber = companyReq?.tracking_number || '';
+            companyName = companyReq?.company_name || '';
+          }
+          
+          if (email) {
+            console.log(`Sending payment confirmation email to: ${email}`);
+            
+            const displayTrackingNumber = requestTrackingNumber || trackingNumber || requestId.slice(0, 8).toUpperCase();
             
             await supabase.functions.invoke('send-payment-notification', {
               body: {
-                to: request.email,
+                to: email,
                 subject: 'Confirmation de paiement - Legal Form',
                 html: `
                   <!DOCTYPE html>
@@ -279,8 +303,8 @@ const handler = async (req: Request): Promise<Response> => {
                         <h1>✅ Paiement Confirmé !</h1>
                       </div>
                       <div class="content">
-                        <p>Bonjour <strong>${request.contact_name || 'Client'}</strong>,</p>
-                        <p>Nous avons bien reçu votre paiement pour <strong>${request.company_name || 'votre demande'}</strong>.</p>
+                        <p>Bonjour <strong>${contactName || 'Client'}</strong>,</p>
+                        <p>Nous avons bien reçu votre paiement pour <strong>${companyName || 'votre demande'}</strong>.</p>
                         <p><strong>📋 Numéro de suivi :</strong></p>
                         <p class="tracking">${displayTrackingNumber}</p>
                         <p>Notre équipe va maintenant traiter votre dossier dans les plus brefs délais. Vous recevrez une notification à chaque étape importante.</p>

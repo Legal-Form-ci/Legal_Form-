@@ -49,6 +49,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import PaymentCallback from "./pages/PaymentCallback";
 
 const queryClient = new QueryClient();
 
@@ -115,6 +116,9 @@ const App = () => (
           <Route path="/request/:id" element={<RequestDetail />} />
           <Route path="/tracking" element={<PublicTracking />} />
           <Route path="/suivi" element={<PublicTracking />} />
+          <Route path="/payment/callback" element={<PaymentCallback />} />
+          <Route path="/payment/success" element={<PaymentCallback />} />
+          <Route path="/payment/failed" element={<PaymentCallback />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/ebooks" element={<Ebooks />} />
