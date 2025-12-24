@@ -161,7 +161,14 @@
     "additional": "Services additionnels",
     "cnps": "CNPS",
     "dfe": "DFE",
-    "ncc": "NCC"
+    "ncc": "NCC",
+    "creationDesc": "Créez votre entreprise en toute simplicité",
+    "additionalDesc": "Formalités complémentaires pour votre entreprise",
+    "cnpsDesc": "Inscription à la Caisse Nationale de Prévoyance Sociale",
+    "dfeDesc": "Déclaration Fiscale d'Existence",
+    "nccDesc": "Numéro de Compte Contribuable",
+    "startNow": "Commencer maintenant",
+    "learnMore": "En savoir plus"
   },
   "footer": {
     "about": "À propos de Legal Form",
@@ -209,7 +216,12 @@
     "readMore": "Lire la suite",
     "optional": "optionnel",
     "previous": "Précédent",
-    "next": "Suivant"
+    "next": "Suivant",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "status": "Statut",
+    "date": "Date",
+    "amount": "Montant"
   },
   "dashboard": {
     "welcome": "Bienvenue",
@@ -227,7 +239,19 @@
     "goodEvening": "Bonsoir",
     "user": "Utilisateur",
     "welcomeBack": "Content de vous revoir sur votre espace",
-    "loginAt": "Connecté à"
+    "loginAt": "Connecté à",
+    "title": "Mon Espace Client",
+    "subtitle": "Suivez l'avancement de vos dossiers",
+    "newRequest": "Nouvelle demande",
+    "logout": "Déconnexion",
+    "companyCreation": "Création d'entreprise",
+    "trackingNumber": "N° de suivi",
+    "type": "Type",
+    "region": "Région",
+    "price": "Tarif",
+    "viewDetails": "Voir les détails et messagerie",
+    "error": "Erreur",
+    "errorLoading": "Impossible de charger vos demandes"
   },
   "contact": {
     "title": "Contactez-nous",
@@ -255,7 +279,12 @@
     "success": "Message envoyé",
     "successDesc": "Nous vous répondrons dans les plus brefs délais.",
     "error": "Erreur",
-    "errorDesc": "Une erreur est survenue"
+    "errorDesc": "Une erreur est survenue",
+    "address": "Adresse",
+    "phone": "Téléphone",
+    "email": "Email",
+    "hours": "Horaires",
+    "workingHours": "Lun - Ven: 8h - 18h"
   },
   "auth": {
     "required": "Authentification requise",
@@ -264,6 +293,7 @@
     "signup": "Inscription",
     "email": "Email",
     "password": "Mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
     "forgotPassword": "Mot de passe oublié ?",
     "loginButton": "Se connecter",
     "signupButton": "S'inscrire",
@@ -271,20 +301,36 @@
     "signupTitle": "Créer un compte",
     "loginDesc": "Connectez-vous pour suivre vos dossiers",
     "signupDesc": "Créez un compte pour commencer",
-    "accessSpace": "Accédez à votre espace personnel"
+    "accessSpace": "Accédez à votre espace personnel",
+    "fullName": "Nom complet",
+    "phone": "Téléphone",
+    "haveAccount": "Vous avez déjà un compte ?",
+    "noAccount": "Vous n'avez pas de compte ?",
+    "resetPassword": "Réinitialiser le mot de passe",
+    "resetPasswordDesc": "Entrez votre email pour recevoir un lien de réinitialisation",
+    "sendResetLink": "Envoyer le lien",
+    "backToLogin": "Retour à la connexion"
   },
   "testimonials": {
     "title": "Témoignages",
     "subtitle": "Ce que nos clients disent de nous",
     "companiesCreated": "Entreprises créées",
     "regionsCovered": "Régions couvertes",
-    "averageRating": "Note moyenne"
+    "averageRating": "Note moyenne",
+    "shareExperience": "Partagez votre expérience",
+    "yourName": "Votre nom",
+    "yourCompany": "Votre entreprise",
+    "yourTestimonial": "Votre témoignage",
+    "submitTestimonial": "Envoyer le témoignage",
+    "thankYou": "Merci pour votre témoignage !"
   },
   "regions": {
     "title": "Nos Régions",
     "subtitle": "Legal Form est opérationnel dans toute la Côte d'Ivoire pour vous accompagner au plus près de vos projets",
     "mainOffice": "Bureau Principal - Grand-Bassam",
-    "coverage": "Nous couvrons toute la Côte d'Ivoire depuis notre bureau à Abidjan"
+    "coverage": "Nous couvrons toute la Côte d'Ivoire depuis notre bureau à Abidjan",
+    "selectRegion": "Sélectionnez une région",
+    "allRegions": "Toutes les régions"
   },
   "pricing": {
     "title": "Nos Tarifs",
@@ -292,11 +338,108 @@
     "abidjan": "Abidjan",
     "interior": "Intérieur",
     "includes": "Ce tarif inclut",
-    "deliverables": "Livrables"
+    "deliverables": "Livrables",
+    "popular": "Populaire",
+    "startFrom": "À partir de",
+    "perCompany": "par entreprise",
+    "getStarted": "Commencer"
   },
   "notFound": {
     "title": "Page non trouvée",
     "description": "La page que vous recherchez n'existe pas ou a été déplacée.",
     "backHome": "Retour à l'accueil"
+  },
+  "payment": {
+    "title": "Paiement",
+    "processing": "Traitement du paiement...",
+    "success": "Paiement réussi",
+    "successDesc": "Votre paiement a été effectué avec succès.",
+    "failed": "Paiement échoué",
+    "failedDesc": "Une erreur est survenue lors du paiement.",
+    "pending": "Paiement en attente",
+    "pendingDesc": "Votre paiement est en cours de traitement.",
+    "backToDashboard": "Retour au tableau de bord",
+    "tryAgain": "Réessayer",
+    "amount": "Montant",
+    "reference": "Référence",
+    "method": "Méthode de paiement",
+    "status": "Statut"
+  },
+  "status": {
+    "pending": "En attente",
+    "inProgress": "En cours",
+    "completed": "Terminé",
+    "rejected": "Rejeté",
+    "pendingQuote": "Devis en attente",
+    "paid": "Payé",
+    "unpaid": "Non payé"
+  },
+  "admin": {
+    "dashboard": "Tableau de bord",
+    "companies": "Entreprises",
+    "services": "Services",
+    "payments": "Paiements",
+    "users": "Utilisateurs",
+    "team": "Équipe",
+    "settings": "Paramètres",
+    "analytics": "Statistiques",
+    "tickets": "Tickets",
+    "testimonials": "Témoignages",
+    "invoices": "Factures",
+    "documents": "Documents",
+    "conversations": "Conversations",
+    "newRequests": "Nouvelles demandes",
+    "totalRevenue": "Revenus totaux",
+    "pendingPayments": "Paiements en attente",
+    "completedRequests": "Demandes terminées"
+  },
+  "about": {
+    "title": "À propos de Legal Form",
+    "subtitle": "Votre partenaire de confiance pour la création d'entreprise en Côte d'Ivoire",
+    "mission": "Notre Mission",
+    "missionDesc": "Simplifier et accélérer le processus de création d'entreprise en Côte d'Ivoire.",
+    "vision": "Notre Vision",
+    "visionDesc": "Devenir le leader de l'accompagnement entrepreneurial en Afrique de l'Ouest.",
+    "values": "Nos Valeurs",
+    "valuesDesc": "Excellence, Intégrité, Innovation et Proximité.",
+    "team": "Notre Équipe",
+    "teamDesc": "Une équipe d'experts dédiés à votre réussite.",
+    "whyUs": "Pourquoi nous choisir ?",
+    "reason1": "Expertise juridique reconnue",
+    "reason2": "Accompagnement personnalisé",
+    "reason3": "Délais optimisés",
+    "reason4": "Tarifs transparents"
+  },
+  "blog": {
+    "title": "Blog",
+    "subtitle": "Actualités et conseils pour entrepreneurs",
+    "readMore": "Lire la suite",
+    "categories": "Catégories",
+    "recentPosts": "Articles récents",
+    "noPosts": "Aucun article disponible"
+  },
+  "ebooks": {
+    "title": "E-books",
+    "subtitle": "Ressources gratuites pour entrepreneurs",
+    "download": "Télécharger",
+    "free": "Gratuit",
+    "noEbooks": "Aucun e-book disponible"
+  },
+  "tracking": {
+    "title": "Suivi de dossier",
+    "subtitle": "Suivez l'avancement de votre demande",
+    "enterTracking": "Entrez votre numéro de suivi",
+    "trackingPlaceholder": "Ex: LF-ENT-20231215-XXXXXXXX",
+    "search": "Rechercher",
+    "notFound": "Dossier non trouvé",
+    "notFoundDesc": "Vérifiez votre numéro de suivi et réessayez."
+  },
+  "privacy": {
+    "title": "Politique de Confidentialité",
+    "subtitle": "Comment nous protégeons vos données"
+  },
+  "terms": {
+    "title": "Conditions Générales",
+    "subtitle": "Conditions d'utilisation de nos services"
   }
 }
