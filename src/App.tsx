@@ -50,6 +50,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import PaymentCallback from "./pages/PaymentCallback";
+import Payment from "./pages/Payment";
 
 const queryClient = new QueryClient();
 
@@ -119,6 +120,7 @@ const App = () => (
           <Route path="/payment/callback" element={<PaymentCallback />} />
           <Route path="/payment/success" element={<PaymentCallback />} />
           <Route path="/payment/failed" element={<PaymentCallback />} />
+          <Route path="/payment/:requestId" element={<Payment />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/ebooks" element={<Ebooks />} />
