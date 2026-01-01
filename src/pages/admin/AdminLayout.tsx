@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { 
   LayoutDashboard, 
   Users, 
@@ -14,13 +15,13 @@ import {
   Menu,
   X,
   ChevronDown,
-  Bell,
   BarChart3,
   Briefcase
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { NotificationPanel } from "@/components/admin/NotificationPanel";
 import logo from "@/assets/logo.png";
 
 interface NavItem {
@@ -36,6 +37,15 @@ const AdminLayout = ({ children }: { children?: React.ReactNode }) => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Real-time notifications
+  const { 
+    notifications, 
+    unreadCount, 
+    markAsRead, 
+    markAllAsRead, 
+    clearNotifications 
+  } = useRealtimeNotifications(userRole === 'admin');
 
   useEffect(() => {
     if (!loading) {
@@ -119,8 +129,19 @@ const AdminLayout = ({ children }: { children?: React.ReactNode }) => {
           })}
         </nav>
 
-        {/* User Section */}
-        <div className="p-4 border-t border-slate-700">
+        {/* Notifications & User Section */}
+        <div className="p-4 border-t border-slate-700 space-y-2">
+          {sidebarOpen && (
+            <div className="flex justify-center mb-2">
+              <NotificationPanel
+                notifications={notifications}
+                unreadCount={unreadCount}
+                onMarkAsRead={markAsRead}
+                onMarkAllAsRead={markAllAsRead}
+                onClear={clearNotifications}
+              />
+            </div>
+          )}
           <Button
             variant="ghost"
             onClick={signOut}
@@ -146,9 +167,18 @@ const AdminLayout = ({ children }: { children?: React.ReactNode }) => {
           <img src={logo} alt="Legal Form" className="h-8 w-8" />
           <span className="font-bold text-primary">Legal Form</span>
         </div>
-        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2">
-          {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <NotificationPanel
+            notifications={notifications}
+            unreadCount={unreadCount}
+            onMarkAsRead={markAsRead}
+            onMarkAllAsRead={markAllAsRead}
+            onClear={clearNotifications}
+          />
+          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2">
+            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Menu */}
