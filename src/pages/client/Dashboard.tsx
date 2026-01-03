@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import DashboardWelcome from "@/components/DashboardWelcome";
-import { LogOut, Plus, FileText, Building2, Clock } from "lucide-react";
+import { LogOut, Plus, FileText, Building2, Clock, CreditCard } from "lucide-react";
 
 interface Request {
   id: string;
@@ -259,16 +259,31 @@ const ClientDashboard = () => {
                         </div>
                       )}
                     </div>
-                    <Button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/request/${request.id}?type=${request.type}`);
-                      }}
-                      className="w-full"
-                      variant="outline"
-                    >
-                      {t('dashboard.viewDetails', 'Voir les détails et messagerie')}
-                    </Button>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      {/* Payment button for unpaid requests */}
+                      {(!request.payment_status || request.payment_status === 'pending') && request.estimated_price && (
+                        <Button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/payment/${request.id}?type=${request.type}`);
+                          }}
+                          className="w-full sm:w-auto bg-accent hover:bg-accent/90"
+                        >
+                          <CreditCard className="mr-2 h-4 w-4" />
+                          Payer maintenant
+                        </Button>
+                      )}
+                      <Button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/request/${request.id}?type=${request.type}`);
+                        }}
+                        className="w-full sm:w-auto"
+                        variant="outline"
+                      >
+                        {t('dashboard.viewDetails', 'Voir les détails et messagerie')}
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               ))}

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Menu, X, LogIn, Globe } from "lucide-react";
+import { Menu, X, LogIn, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import logo from "@/assets/logo.png";
@@ -21,7 +21,7 @@ const Header = () => {
     { name: t('nav.regions'), href: "/regions" },
     { name: t('nav.showcase'), href: "/showcase" },
     { name: t('nav.pricing'), href: "/pricing" },
-    { name: t('nav.about'), href: "/about" },
+    { name: "Suivre mon dossier", href: "/tracking", icon: Search },
     { name: t('nav.contact'), href: "/contact" },
   ];
 

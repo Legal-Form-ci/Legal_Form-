@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useKkiapay, KkiapaySuccessResponse } from "@/hooks/useKkiapay";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +17,8 @@ import {
   AlertCircle,
   Phone,
   Mail,
-  Receipt
+  Receipt,
+  Smartphone
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -49,6 +51,67 @@ const Payment = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Handle payment success
+  const handlePaymentSuccess = useCallback(async (response: KkiapaySuccessResponse) => {
+    console.log('Payment successful:', response);
+    setProcessing(true);
+    
+    try {
+      // Update payment status in database
+      const { error } = await supabase.functions.invoke('verify-kkiapay-payment', {
+        body: {
+          transactionId: response.transactionId,
+          requestId: request?.id,
+          requestType: request?.type,
+          amount: request?.estimated_price
+        }
+      });
+
+      if (error) {
+        console.error('Verification error:', error);
+        // Still show success as payment was made
+      }
+
+      toast({
+        title: "Paiement réussi !",
+        description: "Votre paiement a été effectué avec succès.",
+      });
+
+      // Redirect to success page or dashboard
+      navigate('/payment/callback?status=success&transaction_id=' + response.transactionId);
+    } catch (error) {
+      console.error('Error updating payment:', error);
+      toast({
+        title: "Paiement reçu",
+        description: "Le paiement a été effectué. Mise à jour en cours...",
+      });
+      navigate('/payment/callback?status=success&transaction_id=' + response.transactionId);
+    } finally {
+      setProcessing(false);
+    }
+  }, [request, toast, navigate]);
+
+  const handlePaymentFailed = useCallback((error: any) => {
+    console.error('Payment failed:', error);
+    setProcessing(false);
+    toast({
+      title: "Paiement échoué",
+      description: "Le paiement n'a pas pu être effectué. Veuillez réessayer.",
+      variant: "destructive",
+    });
+  }, [toast]);
+
+  const handlePaymentClose = useCallback(() => {
+    console.log('Payment widget closed');
+    setProcessing(false);
+  }, []);
+
+  const { openPayment, isReady } = useKkiapay({
+    onSuccess: handlePaymentSuccess,
+    onFailed: handlePaymentFailed,
+    onClose: handlePaymentClose,
+  });
+
   useEffect(() => {
     if (!authLoading && !user) {
       toast({
@@ -79,7 +142,6 @@ const Payment = () => {
       if (error) throw error;
 
       if (data) {
-        // Handle both table types with type assertion
         const record = data as any;
         setRequest({
           id: record.id,
@@ -119,30 +181,51 @@ const Payment = () => {
       const customerName = request.contact_name || 'Client';
       const customerPhone = request.phone || request.contact_phone || '';
 
-      const { data, error } = await supabase.functions.invoke('create-payment', {
-        body: {
+      // Create a pending payment record first
+      const { error: insertError } = await supabase
+        .from('payments')
+        .insert({
+          user_id: user.id,
+          request_id: request.id,
+          request_type: request.type,
           amount: request.estimated_price,
-          description: `Paiement ${request.type === 'company' ? 'création entreprise' : 'service'} - ${request.tracking_number}`,
-          requestId: request.id,
-          requestType: request.type,
-          customerEmail,
-          customerName,
-          customerPhone
+          currency: 'XOF',
+          status: 'pending',
+          customer_email: customerEmail,
+          customer_name: customerName,
+          customer_phone: customerPhone,
+          tracking_number: request.tracking_number,
+          metadata: {
+            description: `Paiement ${request.type === 'company' ? 'création entreprise' : 'service'} - ${request.tracking_number}`
+          }
+        });
+
+      if (insertError) {
+        console.error('Error creating payment record:', insertError);
+      }
+
+      // Open KkiaPay widget
+      const success = openPayment({
+        amount: request.estimated_price,
+        name: customerName,
+        email: customerEmail,
+        phone: customerPhone,
+        partnerId: request.id,
+        data: {
+          request_id: request.id,
+          request_type: request.type,
+          tracking_number: request.tracking_number
         }
       });
 
-      if (error) throw error;
-
-      if (data?.paymentUrl) {
-        window.location.href = data.paymentUrl;
-      } else {
-        throw new Error('URL de paiement non reçue');
+      if (!success) {
+        throw new Error('Impossible d\'ouvrir le widget de paiement');
       }
     } catch (error: any) {
       console.error('Erreur paiement:', error);
       toast({
         title: "Erreur de paiement",
-        description: error.message || "Une erreur est survenue lors de la création du paiement",
+        description: error.message || "Une erreur est survenue lors de l'initialisation du paiement",
         variant: "destructive",
       });
       setProcessing(false);
@@ -152,6 +235,7 @@ const Payment = () => {
   const getStatusBadge = (status: string | null) => {
     switch (status) {
       case 'approved':
+      case 'completed':
         return <Badge className="bg-green-500">Payé</Badge>;
       case 'pending':
         return <Badge className="bg-yellow-500">En attente</Badge>;
@@ -195,7 +279,7 @@ const Payment = () => {
     );
   }
 
-  const isPaid = request.payment_status === 'approved';
+  const isPaid = request.payment_status === 'approved' || request.payment_status === 'completed';
 
   return (
     <div className="min-h-screen bg-background">
@@ -301,28 +385,32 @@ const Payment = () => {
                 <CardHeader>
                   <CardTitle className="text-lg">Méthodes de paiement</CardTitle>
                   <CardDescription>
-                    Paiement sécurisé via FedaPay - Mobile Money & Cartes
+                    Paiement sécurisé via KkiaPay - Mobile Money & Cartes
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-4 gap-4 mb-6">
                     <div className="p-3 border rounded-lg text-center">
+                      <Smartphone className="h-5 w-5 mx-auto mb-1 text-yellow-500" />
                       <span className="text-xs font-medium">MTN</span>
                     </div>
                     <div className="p-3 border rounded-lg text-center">
+                      <Smartphone className="h-5 w-5 mx-auto mb-1 text-orange-500" />
                       <span className="text-xs font-medium">Orange</span>
                     </div>
                     <div className="p-3 border rounded-lg text-center">
+                      <Smartphone className="h-5 w-5 mx-auto mb-1 text-blue-500" />
                       <span className="text-xs font-medium">Moov</span>
                     </div>
                     <div className="p-3 border rounded-lg text-center">
-                      <span className="text-xs font-medium">Visa</span>
+                      <CreditCard className="h-5 w-5 mx-auto mb-1 text-blue-700" />
+                      <span className="text-xs font-medium">Visa/MC</span>
                     </div>
                   </div>
 
                   <Button
                     onClick={handlePayment}
-                    disabled={processing}
+                    disabled={processing || !isReady}
                     className="w-full bg-accent hover:bg-accent/90"
                     size="lg"
                   >
@@ -340,7 +428,7 @@ const Payment = () => {
                   </Button>
 
                   <p className="text-xs text-muted-foreground text-center mt-4">
-                    En cliquant sur "Payer", vous serez redirigé vers la page de paiement sécurisée FedaPay.
+                    En cliquant sur "Payer", vous serez redirigé vers la page de paiement sécurisée KkiaPay.
                   </p>
                 </CardContent>
               </Card>

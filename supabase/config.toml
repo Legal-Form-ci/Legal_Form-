@@ -3,6 +3,9 @@ project_id = "qeznwyczskbjaeyhvuis"
 [functions.create-payment]
 verify_jwt = true
 
+[functions.verify-kkiapay-payment]
+verify_jwt = true
+
 [functions.payment-webhook]
 verify_jwt = false
 
