@@ -374,7 +374,7 @@
     "paid": "Paid",
     "unpaid": "Unpaid"
   },
-  "admin": {
+"admin": {
     "dashboard": "Dashboard",
     "companies": "Companies",
     "services": "Services",
@@ -391,7 +391,19 @@
     "newRequests": "New requests",
     "totalRevenue": "Total revenue",
     "pendingPayments": "Pending payments",
-    "completedRequests": "Completed requests"
+    "completedRequests": "Completed requests",
+    "manageTeam": "Manage team",
+    "viewAnalytics": "View analytics",
+    "generateInvoice": "Generate invoice",
+    "allCompanies": "All companies",
+    "allServices": "All services",
+    "allPayments": "All payments",
+    "allUsers": "All users",
+    "recentActivity": "Recent activity",
+    "quickActions": "Quick actions",
+    "systemStatus": "System status",
+    "online": "Online",
+    "offline": "Offline"
   },
   "about": {
     "title": "About Legal Form",
@@ -425,14 +437,21 @@
     "free": "Free",
     "noEbooks": "No e-books available"
   },
-  "tracking": {
+"tracking": {
     "title": "File tracking",
     "subtitle": "Track the progress of your request",
     "enterTracking": "Enter your tracking number",
     "trackingPlaceholder": "Ex: LF-ENT-20231215-XXXXXXXX",
     "search": "Search",
     "notFound": "File not found",
-    "notFoundDesc": "Check your tracking number and try again."
+    "notFoundDesc": "Check your tracking number and try again.",
+    "enterPhone": "Enter your phone number",
+    "phonePlaceholder": "Ex: 0709677925",
+    "yourRequests": "Your requests",
+    "noRequestsFound": "No requests found",
+    "noRequestsFoundDesc": "No requests found with this phone number.",
+    "payNow": "Pay now",
+    "loginRequired": "Log in to access this feature"
   },
   "privacy": {
     "title": "Privacy Policy",

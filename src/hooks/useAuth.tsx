@@ -12,6 +12,26 @@ export const useAuth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const fetchUserRole = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Error fetching user role:', error);
+        return 'client';
+      }
+      
+      return data?.role || 'client';
+    } catch (error) {
+      console.error('Error in fetchUserRole:', error);
+      return 'client';
+    }
+  };
+
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -21,17 +41,8 @@ export const useAuth = () => {
         
         if (session?.user) {
           // Fetch user role
-          setTimeout(async () => {
-            const { data } = await supabase
-              .from('user_roles')
-              .select('role')
-              .eq('user_id', session.user.id)
-              .single();
-            
-            if (data) {
-              setUserRole(data.role);
-            }
-          }, 0);
+          const role = await fetchUserRole(session.user.id);
+          setUserRole(role);
         } else {
           setUserRole(null);
         }
@@ -39,133 +50,205 @@ export const useAuth = () => {
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', session.user.id)
-          .single()
-          .then(({ data }) => {
-            if (data) {
-              setUserRole(data.role);
-            }
-            setLoading(false);
-          });
-      } else {
-        setLoading(false);
+        const role = await fetchUserRole(session.user.id);
+        setUserRole(role);
       }
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
   const signUp = async (email: string, password: string, fullName: string, phone: string) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          full_name: fullName,
-          phone: phone,
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            full_name: fullName,
+            phone: phone,
+          }
         }
-      }
-    });
-    
-    if (error) {
-      // Handle specific error messages
-      let errorMessage = error.message;
-      if (error.message.includes('User already registered')) {
-        errorMessage = "Un compte existe déjà avec cet email. Veuillez vous connecter.";
-      } else if (error.message.includes('Password')) {
-        errorMessage = "Le mot de passe doit contenir au moins 6 caractères.";
+      });
+      
+      if (error) {
+        let errorMessage = error.message;
+        if (error.message.includes('User already registered')) {
+          errorMessage = "Un compte existe déjà avec cet email. Veuillez vous connecter.";
+        } else if (error.message.includes('Password')) {
+          errorMessage = "Le mot de passe doit contenir au moins 6 caractères.";
+        } else if (error.message.includes('Invalid email')) {
+          errorMessage = "Veuillez entrer une adresse email valide.";
+        }
+        
+        toast({
+          title: "Erreur d'inscription",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        return { error };
       }
       
+      // If user was created and auto-confirmed
+      if (data.user && data.session) {
+        // Create profile
+        await supabase.from('profiles').upsert({
+          user_id: data.user.id,
+          full_name: fullName,
+          phone: phone,
+        }, { onConflict: 'user_id' });
+
+        // Create default role
+        await supabase.from('user_roles').upsert({
+          user_id: data.user.id,
+          role: 'client',
+        }, { onConflict: 'user_id' });
+
+        setUserRole('client');
+        
+        toast({
+          title: "Inscription réussie",
+          description: "Bienvenue sur Legal Form !",
+        });
+
+        navigate('/client/dashboard');
+      } else if (data.user) {
+        // Email confirmation required
+        toast({
+          title: "Inscription réussie",
+          description: "Bienvenue sur Legal Form ! Vous pouvez maintenant vous connecter.",
+        });
+      }
+      
+      return { error: null };
+    } catch (error: any) {
+      console.error('SignUp error:', error);
       toast({
-        title: "Erreur d'inscription",
-        description: errorMessage,
+        title: "Erreur",
+        description: "Une erreur est survenue lors de l'inscription",
         variant: "destructive",
       });
       return { error };
     }
-    
-    // Check if user was created successfully
-    if (data.user) {
-      toast({
-        title: "Inscription réussie",
-        description: "Bienvenue sur Legal Form ! Vous pouvez maintenant vous connecter.",
-      });
-    }
-    
-    return { error: null };
   };
 
   const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    
-    if (error) {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) {
+        let errorMessage = error.message;
+        if (error.message.includes('Invalid login credentials')) {
+          errorMessage = "Email ou mot de passe incorrect.";
+        } else if (error.message.includes('Email not confirmed')) {
+          errorMessage = "Veuillez confirmer votre email avant de vous connecter.";
+        }
+        
+        toast({
+          title: "Erreur de connexion",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        return { error };
+      }
+      
       toast({
-        title: "Erreur de connexion",
-        description: error.message,
+        title: "Connexion réussie",
+        description: "Bienvenue !",
+      });
+      
+      // Fetch user role and redirect
+      if (data.user) {
+        // Ensure profile exists
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', data.user.id)
+          .maybeSingle();
+
+        if (!profile) {
+          await supabase.from('profiles').insert({
+            user_id: data.user.id,
+            full_name: data.user.user_metadata?.full_name || '',
+            phone: data.user.user_metadata?.phone || '',
+          });
+        }
+
+        // Get or create role
+        let { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', data.user.id)
+          .maybeSingle();
+
+        if (!roleData) {
+          await supabase.from('user_roles').insert({
+            user_id: data.user.id,
+            role: 'client',
+          });
+          roleData = { role: 'client' };
+        }
+        
+        const role = roleData?.role || 'client';
+        setUserRole(role);
+        
+        if (role === 'admin' || role === 'team') {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/client/dashboard');
+        }
+      }
+      
+      return { error: null };
+    } catch (error: any) {
+      console.error('SignIn error:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la connexion",
         variant: "destructive",
       });
       return { error };
     }
-    
-    toast({
-      title: "Connexion réussie",
-      description: "Bienvenue !",
-    });
-    
-    // Fetch user role and redirect immediately
-    if (data.user) {
-      const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', data.user.id)
-        .maybeSingle();
-      
-      const role = roleData?.role || 'client';
-      setUserRole(role);
-      
-      // Redirect based on role
-      if (role === 'admin' || role === 'team') {
-        navigate('/admin/dashboard');
-      } else {
-        navigate('/client/dashboard');
-      }
-    }
-    
-    return { error: null };
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    
-    if (error) {
+    try {
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        toast({
+          title: "Erreur",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setUser(null);
+      setSession(null);
+      setUserRole(null);
+      
       toast({
-        title: "Erreur",
-        description: error.message,
-        variant: "destructive",
+        title: "Déconnexion",
+        description: "À bientôt !",
       });
-      return;
+      
+      navigate("/");
+    } catch (error) {
+      console.error('SignOut error:', error);
     }
-    
-    toast({
-      title: "Déconnexion",
-      description: "À bientôt !",
-    });
-    
-    navigate("/");
   };
 
   return {

@@ -21,7 +21,7 @@ const Header = () => {
     { name: t('nav.regions'), href: "/regions" },
     { name: t('nav.showcase'), href: "/showcase" },
     { name: t('nav.pricing'), href: "/pricing" },
-    { name: "Suivre mon dossier", href: "/tracking", icon: Search },
+    { name: t('hero.track', 'Suivre mon dossier'), href: "/tracking", icon: Search },
     { name: t('nav.contact'), href: "/contact" },
   ];
 

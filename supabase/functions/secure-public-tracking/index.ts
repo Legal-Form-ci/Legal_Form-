@@ -6,80 +6,36 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const RATE_LIMIT_WINDOW_MINUTES = 60;
-const MAX_ATTEMPTS_PER_WINDOW = 10;
-const BLOCK_DURATION_MINUTES = 30;
-
-async function checkRateLimit(supabase: any, ipAddress: string, phone: string): Promise<{ allowed: boolean; blockedUntil?: Date }> {
-  const now = new Date();
+function normalizePhone(phone: string): string[] {
+  // Remove all spaces, dashes, dots
+  const cleaned = phone.replace(/[\s\-\.]/g, '');
   
-  // Get or create rate limit record
-  const { data: rateLimit, error } = await supabase
-    .from('public_tracking_rate_limit')
-    .select('*')
-    .eq('ip_address', ipAddress)
-    .eq('phone', phone)
-    .single();
-
-  if (error && error.code !== 'PGRST116') { // PGRST116 = not found
-    throw error;
-  }
-
-  // If blocked, check if block has expired
-  if (rateLimit?.blocked_until) {
-    const blockedUntil = new Date(rateLimit.blocked_until);
-    if (now < blockedUntil) {
-      return { allowed: false, blockedUntil };
-    }
-  }
-
-  // If no record or window expired, create/reset
-  if (!rateLimit || (now.getTime() - new Date(rateLimit.first_attempt_at).getTime()) > RATE_LIMIT_WINDOW_MINUTES * 60 * 1000) {
-    await supabase
-      .from('public_tracking_rate_limit')
-      .upsert({
-        ip_address: ipAddress,
-        phone: phone,
-        attempt_count: 1,
-        first_attempt_at: now.toISOString(),
-        last_attempt_at: now.toISOString(),
-        blocked_until: null
-      }, { onConflict: 'ip_address,phone' });
-    
-    return { allowed: true };
-  }
-
-  // Increment attempt count
-  const newAttemptCount = rateLimit.attempt_count + 1;
+  // Generate variations for matching
+  const variations: string[] = [cleaned];
   
-  if (newAttemptCount > MAX_ATTEMPTS_PER_WINDOW) {
-    // Block the IP for this phone number
-    const blockedUntil = new Date(now.getTime() + BLOCK_DURATION_MINUTES * 60 * 1000);
-    
-    await supabase
-      .from('public_tracking_rate_limit')
-      .update({
-        attempt_count: newAttemptCount,
-        last_attempt_at: now.toISOString(),
-        blocked_until: blockedUntil.toISOString()
-      })
-      .eq('ip_address', ipAddress)
-      .eq('phone', phone);
-    
-    return { allowed: false, blockedUntil };
+  // If starts with +225, also try without it
+  if (cleaned.startsWith('+225')) {
+    variations.push(cleaned.substring(4));
   }
-
-  // Update attempt count
-  await supabase
-    .from('public_tracking_rate_limit')
-    .update({
-      attempt_count: newAttemptCount,
-      last_attempt_at: now.toISOString()
-    })
-    .eq('ip_address', ipAddress)
-    .eq('phone', phone);
-
-  return { allowed: true };
+  // If starts with 225, also try without it
+  if (cleaned.startsWith('225') && cleaned.length > 10) {
+    variations.push(cleaned.substring(3));
+  }
+  // If starts with 00225, also try without it
+  if (cleaned.startsWith('00225')) {
+    variations.push(cleaned.substring(5));
+  }
+  // If doesn't start with +, try with +225
+  if (!cleaned.startsWith('+')) {
+    variations.push(`+225${cleaned}`);
+    variations.push(`+225${cleaned.replace(/^0/, '')}`);
+  }
+  // Also try without leading 0
+  if (cleaned.startsWith('0')) {
+    variations.push(cleaned.substring(1));
+  }
+  
+  return [...new Set(variations)];
 }
 
 function getClientIP(req: Request): string {
@@ -110,67 +66,50 @@ const handler = async (req: Request): Promise<Response> => {
     const ipAddress = getClientIP(req);
     console.log(`Tracking request from IP: ${ipAddress} for phone: ${phone}`);
 
-    // Check rate limit
-    const rateLimitCheck = await checkRateLimit(supabase, ipAddress, phone);
-    
-    if (!rateLimitCheck.allowed) {
-      return new Response(
-        JSON.stringify({ 
-          error: 'Too many requests. Please try again later.',
-          blockedUntil: rateLimitCheck.blockedUntil?.toISOString()
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 }
-      );
-    }
+    // Generate phone variations for matching
+    const phoneVariations = normalizePhone(phone);
+    console.log('Phone variations:', phoneVariations);
 
-    // Get tracking entries
-    const { data: trackingData, error: trackingError } = await supabase
-      .from('public_tracking')
-      .select('request_id, request_type')
-      .eq('phone', phone);
+    const allRequests: any[] = [];
 
-    if (trackingError) throw trackingError;
-
-    if (!trackingData || trackingData.length === 0) {
-      return new Response(
-        JSON.stringify({ requests: [] }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-      );
-    }
-
-    const allRequests = [];
-
-    // Fetch company requests
-    const companyIds = trackingData
-      .filter(t => t.request_type === 'company')
-      .map(t => t.request_id);
-
-    if (companyIds.length > 0) {
-      const { data: companyData } = await supabase
+    // Fetch company requests matching any phone variation
+    for (const phoneVar of phoneVariations) {
+      const { data: companyData, error: companyError } = await supabase
         .from('company_requests')
-        .select('id, tracking_number, status, created_at, company_name, contact_name')
-        .in('id', companyIds);
+        .select('id, tracking_number, status, created_at, company_name, contact_name, phone, payment_status, estimated_price')
+        .or(`phone.ilike.%${phoneVar}%,phone.eq.${phoneVar}`);
 
-      if (companyData) {
-        allRequests.push(...companyData.map(r => ({ ...r, type: 'company' })));
+      if (!companyError && companyData) {
+        for (const r of companyData) {
+          // Check if this request is already in our results
+          if (!allRequests.some(ar => ar.id === r.id)) {
+            allRequests.push({ ...r, type: 'company' });
+          }
+        }
       }
     }
 
-    // Fetch service requests
-    const serviceIds = trackingData
-      .filter(t => t.request_type === 'service')
-      .map(t => t.request_id);
-
-    if (serviceIds.length > 0) {
-      const { data: serviceData } = await supabase
+    // Fetch service requests matching any phone variation
+    for (const phoneVar of phoneVariations) {
+      const { data: serviceData, error: serviceError } = await supabase
         .from('service_requests')
-        .select('id, tracking_number, status, created_at, service_type, contact_name')
-        .in('id', serviceIds);
+        .select('id, tracking_number, status, created_at, service_type, contact_name, company_name, contact_phone, payment_status, estimated_price')
+        .or(`contact_phone.ilike.%${phoneVar}%,contact_phone.eq.${phoneVar}`);
 
-      if (serviceData) {
-        allRequests.push(...serviceData.map(r => ({ ...r, type: 'service' })));
+      if (!serviceError && serviceData) {
+        for (const r of serviceData) {
+          // Check if this request is already in our results
+          if (!allRequests.some(ar => ar.id === r.id)) {
+            allRequests.push({ ...r, type: 'service' });
+          }
+        }
       }
     }
+
+    // Sort by created_at descending
+    allRequests.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    console.log(`Found ${allRequests.length} requests for phone ${phone}`);
 
     return new Response(
       JSON.stringify({ requests: allRequests }),
