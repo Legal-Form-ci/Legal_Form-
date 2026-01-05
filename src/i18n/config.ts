@@ -4,6 +4,7 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 
 import translationFR from './locales/fr.json';
 import translationEN from './locales/en.json';
+import translationES from './locales/es.json';
 
 const resources = {
   fr: {
@@ -11,6 +12,9 @@ const resources = {
   },
   en: {
     translation: translationEN
+  },
+  es: {
+    translation: translationES
   }
 };
 
@@ -29,7 +33,7 @@ i18n
       lookupQuerystring: 'lang',
       caches: ['localStorage'],
     },
-    supportedLngs: ['fr', 'en'],
+    supportedLngs: ['fr', 'en', 'es'],
   });
 
 export default i18n;

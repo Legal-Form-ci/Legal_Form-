@@ -374,7 +374,7 @@
     "paid": "Payé",
     "unpaid": "Non payé"
   },
-  "admin": {
+"admin": {
     "dashboard": "Tableau de bord",
     "companies": "Entreprises",
     "services": "Services",
@@ -391,7 +391,19 @@
     "newRequests": "Nouvelles demandes",
     "totalRevenue": "Revenus totaux",
     "pendingPayments": "Paiements en attente",
-    "completedRequests": "Demandes terminées"
+    "completedRequests": "Demandes terminées",
+    "manageTeam": "Gérer l'équipe",
+    "viewAnalytics": "Voir les statistiques",
+    "generateInvoice": "Générer une facture",
+    "allCompanies": "Toutes les entreprises",
+    "allServices": "Tous les services",
+    "allPayments": "Tous les paiements",
+    "allUsers": "Tous les utilisateurs",
+    "recentActivity": "Activité récente",
+    "quickActions": "Actions rapides",
+    "systemStatus": "État du système",
+    "online": "En ligne",
+    "offline": "Hors ligne"
   },
   "about": {
     "title": "À propos de Legal Form",
@@ -425,14 +437,21 @@
     "free": "Gratuit",
     "noEbooks": "Aucun e-book disponible"
   },
-  "tracking": {
+"tracking": {
     "title": "Suivi de dossier",
     "subtitle": "Suivez l'avancement de votre demande",
     "enterTracking": "Entrez votre numéro de suivi",
     "trackingPlaceholder": "Ex: LF-ENT-20231215-XXXXXXXX",
     "search": "Rechercher",
     "notFound": "Dossier non trouvé",
-    "notFoundDesc": "Vérifiez votre numéro de suivi et réessayez."
+    "notFoundDesc": "Vérifiez votre numéro de suivi et réessayez.",
+    "enterPhone": "Entrez votre numéro de téléphone",
+    "phonePlaceholder": "Ex: 0709677925",
+    "yourRequests": "Vos demandes",
+    "noRequestsFound": "Aucune demande trouvée",
+    "noRequestsFoundDesc": "Aucune demande trouvée avec ce numéro de téléphone.",
+    "payNow": "Payer maintenant",
+    "loginRequired": "Connectez-vous pour accéder à cette fonctionnalité"
   },
   "privacy": {
     "title": "Politique de Confidentialité",

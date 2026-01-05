@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { ArrowLeft, Download, Plus, Trash2, FileText, Building2, Phone, Mail, MapPin, Calendar } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { ArrowLeft, Download, Plus, Trash2, FileText, Building2, Phone, Mail, MapPin, Calendar, User, Loader2 } from "lucide-react";
 import logoImg from "@/assets/logo.png";
 
 interface InvoiceItem {
@@ -18,9 +19,26 @@ interface InvoiceItem {
   unitPrice: number;
 }
 
+interface ClientRequest {
+  id: string;
+  tracking_number: string;
+  company_name?: string;
+  contact_name: string;
+  email: string;
+  phone: string;
+  type: 'company' | 'service';
+  estimated_price: number;
+  payment_status: string | null;
+  service_type?: string;
+}
+
 const InvoiceGenerator = () => {
   const navigate = useNavigate();
   const invoiceRef = useRef<HTMLDivElement>(null);
+  
+  const [clients, setClients] = useState<ClientRequest[]>([]);
+  const [loadingClients, setLoadingClients] = useState(true);
+  const [selectedClientId, setSelectedClientId] = useState<string>('');
   
   const [invoiceData, setInvoiceData] = useState({
     invoiceNumber: `FAC-${Date.now().toString().slice(-6)}`,
@@ -33,11 +51,99 @@ const InvoiceGenerator = () => {
     clientCompany: '',
     notes: '',
     serviceType: '',
+    requestId: '',
+    requestType: '',
   });
 
   const [items, setItems] = useState<InvoiceItem[]>([
     { id: '1', description: '', quantity: 1, unitPrice: 0 }
   ]);
+
+  // Fetch clients (unpaid requests)
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        // Fetch company requests
+        const { data: companyData, error: companyError } = await supabase
+          .from('company_requests')
+          .select('id, tracking_number, company_name, contact_name, email, phone, estimated_price, payment_status')
+          .order('created_at', { ascending: false });
+
+        // Fetch service requests
+        const { data: serviceData, error: serviceError } = await supabase
+          .from('service_requests')
+          .select('id, tracking_number, company_name, contact_name, contact_email, contact_phone, estimated_price, payment_status, service_type')
+          .order('created_at', { ascending: false });
+
+        if (companyError) console.error('Company fetch error:', companyError);
+        if (serviceError) console.error('Service fetch error:', serviceError);
+
+        const allClients: ClientRequest[] = [
+          ...(companyData || []).map(c => ({
+            id: c.id,
+            tracking_number: c.tracking_number || '',
+            company_name: c.company_name,
+            contact_name: c.contact_name,
+            email: c.email,
+            phone: c.phone,
+            type: 'company' as const,
+            estimated_price: c.estimated_price || 0,
+            payment_status: c.payment_status,
+          })),
+          ...(serviceData || []).map(s => ({
+            id: s.id,
+            tracking_number: s.tracking_number || '',
+            company_name: s.company_name || s.service_type,
+            contact_name: s.contact_name || '',
+            email: s.contact_email || '',
+            phone: s.contact_phone || '',
+            type: 'service' as const,
+            estimated_price: s.estimated_price || 0,
+            payment_status: s.payment_status,
+            service_type: s.service_type,
+          })),
+        ];
+
+        setClients(allClients);
+      } catch (error) {
+        console.error('Error fetching clients:', error);
+      } finally {
+        setLoadingClients(false);
+      }
+    };
+
+    fetchClients();
+  }, []);
+
+  // Handle client selection
+  const handleClientSelect = (clientId: string) => {
+    setSelectedClientId(clientId);
+    
+    const client = clients.find(c => c.id === clientId);
+    if (client) {
+      setInvoiceData(prev => ({
+        ...prev,
+        clientName: client.contact_name,
+        clientEmail: client.email,
+        clientPhone: client.phone,
+        clientCompany: client.company_name || '',
+        requestId: client.id,
+        requestType: client.type,
+      }));
+
+      // Set default item based on request
+      const description = client.type === 'company' 
+        ? `Création d'entreprise - ${client.company_name || 'SARL'}`
+        : `Service - ${client.service_type || 'Autre'}`;
+      
+      setItems([{
+        id: '1',
+        description,
+        quantity: 1,
+        unitPrice: client.estimated_price || 0,
+      }]);
+    }
+  };
 
   const serviceTypes = [
     { value: "creation_ei", label: "Création Entreprise Individuelle", price: 25000 },
@@ -108,9 +214,24 @@ const InvoiceGenerator = () => {
     return new Intl.NumberFormat('fr-FR').format(price) + ' FCFA';
   };
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     const printContent = invoiceRef.current;
     if (!printContent) return;
+
+    // If linked to a request, update the estimated price
+    if (invoiceData.requestId) {
+      try {
+        const tableName = invoiceData.requestType === 'service' ? 'service_requests' : 'company_requests';
+        await supabase
+          .from(tableName)
+          .update({ estimated_price: calculateTotal() })
+          .eq('id', invoiceData.requestId);
+        
+        toast.success("Facture liée à la demande mise à jour");
+      } catch (error) {
+        console.error('Error updating request:', error);
+      }
+    }
 
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
@@ -303,6 +424,46 @@ const InvoiceGenerator = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Formulaire */}
           <div className="space-y-6">
+            {/* Sélection du demandeur */}
+            <Card className="border-primary/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5 text-primary" />
+                  Sélectionner un demandeur
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loadingClients ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <Select value={selectedClientId} onValueChange={handleClientSelect}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choisir un demandeur existant" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.map(client => (
+                        <SelectItem key={client.id} value={client.id}>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{client.contact_name}</span>
+                            <span className="text-muted-foreground">-</span>
+                            <span className="text-sm text-muted-foreground">{client.company_name || client.service_type}</span>
+                            {client.payment_status !== 'approved' && client.payment_status !== 'completed' && (
+                              <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">Non payé</span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                <p className="text-xs text-muted-foreground mt-2">
+                  Sélectionnez un demandeur pour pré-remplir automatiquement les informations
+                </p>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
