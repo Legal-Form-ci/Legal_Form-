@@ -262,6 +262,11 @@
     "subject": "Asunto",
     "sending": "Enviando...",
     "sendButton": "Enviar mensaje",
+    "openingHours": "Horarios de atención",
+    "mondayFriday": "Lunes - Viernes",
+    "saturday": "Sábado",
+    "sunday": "Domingo",
+    "closed": "Cerrado",
     "form": {
       "title": "Envíanos un mensaje",
       "name": "Nombre completo",
@@ -317,12 +322,15 @@
     "companiesCreated": "Empresas creadas",
     "regionsCovered": "Regiones cubiertas",
     "averageRating": "Calificación promedio",
+    "averageTime": "Tiempo promedio",
     "shareExperience": "Comparte tu experiencia",
     "yourName": "Tu nombre",
     "yourCompany": "Tu empresa",
     "yourTestimonial": "Tu testimonio",
     "submitTestimonial": "Enviar testimonio",
-    "thankYou": "¡Gracias por tu testimonio!"
+    "thankYou": "¡Gracias por tu testimonio!",
+    "joinClients": "Únete a nuestros clientes satisfechos",
+    "trustUs": "Confía en nosotros para crear tu empresa"
   },
   "regions": {
     "title": "Nuestras Regiones",

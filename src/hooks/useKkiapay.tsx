@@ -137,7 +137,7 @@ export const useKkiapay = (options: UseKkiapayOptions = {}) => {
     const fullConfig: KkiapayConfig = {
       ...config,
       key: kkiapayPublicKey,
-      sandbox: true, // Set to false in production
+      sandbox: false, // Production mode for real payments
       theme: '#007c7a', // Brand color
       reason: config.reason || `Paiement Legal Form`,
     };

@@ -113,20 +113,30 @@ const handler = async (req: Request): Promise<Response> => {
       console.error('Error updating payment:', updatePaymentError);
     }
 
-    // Update request record
+    // Update request record with proper status mapping
     const tableName = requestType === 'service' ? 'service_requests' : 'company_requests';
+    const newStatus = paymentStatus === 'approved' ? 'in_progress' : 
+                      paymentStatus === 'failed' ? 'pending' : undefined;
+    
+    const updateData: Record<string, any> = {
+      payment_status: paymentStatus,
+      payment_id: transactionId,
+      updated_at: new Date().toISOString()
+    };
+    
+    if (newStatus) {
+      updateData.status = newStatus;
+    }
+    
     const { error: updateRequestError } = await supabase
       .from(tableName)
-      .update({
-        payment_status: paymentStatus,
-        payment_id: transactionId,
-        status: paymentStatus === 'approved' ? 'in_progress' : undefined,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', requestId);
 
     if (updateRequestError) {
       console.error('Error updating request:', updateRequestError);
+    } else {
+      console.log('Request updated successfully:', { requestId, paymentStatus, newStatus });
     }
 
     // Log the payment event
