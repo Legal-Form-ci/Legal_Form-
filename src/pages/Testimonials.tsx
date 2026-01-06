@@ -13,7 +13,7 @@ interface Testimonial {
 }
 
 const defaultTestimonials: Testimonial[] = [
-  { id: "1", name: "KOFFI Inocent", company: "AGRICAPITAL SARL", region: "Daloa", type: "SARL", rating: 5, comment: "Service rapide et professionnel. Je recommande vivement.", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face" },
+  { id: "1", name: "KOFFI Innocent", company: "AGRICAPITAL SARL", region: "Daloa", type: "SARL", rating: 5, comment: "Service rapide et professionnel. Je recommande vivement.", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face" },
   { id: "2", name: "KOUASSI Marie", company: "TECHNOVATE SARL", region: "Abidjan", type: "SARL", rating: 5, comment: "Excellent accompagnement ! L'équipe est réactive.", image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face" },
   { id: "3", name: "DIALLO Amadou", company: "BATIR CI SARL", region: "Bouaké", type: "SARL", rating: 5, comment: "Processus simplifié, équipe compétente.", image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face" },
 ];

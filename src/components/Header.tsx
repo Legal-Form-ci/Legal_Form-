@@ -75,6 +75,16 @@ const Header = () => {
               >
                 EN
               </button>
+              <button
+                onClick={() => changeLanguage('es')}
+                className={`px-3 py-2 text-sm font-medium transition-colors ${
+                  i18n.language === 'es' 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'bg-background hover:bg-muted'
+                }`}
+              >
+                ES
+              </button>
             </div>
             
             {user ? (
@@ -121,6 +131,16 @@ const Header = () => {
                 }`}
               >
                 EN
+              </button>
+              <button
+                onClick={() => changeLanguage('es')}
+                className={`px-2 py-1.5 text-xs font-medium transition-colors ${
+                  i18n.language === 'es' 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'bg-background hover:bg-muted'
+                }`}
+              >
+                ES
               </button>
             </div>
             

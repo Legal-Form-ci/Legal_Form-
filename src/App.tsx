@@ -8,6 +8,7 @@ import { logPageView } from "@/utils/analytics";
 import { Analytics as VercelAnalytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import LexIA from "@/components/LexIA";
+import ScrollToTop from "@/components/ScrollToTop";
 import Index from "./pages/Index";
 import Services from "./pages/Services";
 import Create from "./pages/Create";
@@ -70,6 +71,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <PageViewTracker />
         <Routes>
           <Route path="/" element={<Index />} />
