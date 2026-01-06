@@ -10,7 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import DashboardWelcome from "@/components/DashboardWelcome";
-import { LogOut, Plus, FileText, Building2, Clock, CreditCard } from "lucide-react";
+import { LogOut, Plus, FileText, Building2, Clock, CreditCard, MessageSquare, Eye, TrendingUp, CheckCircle2 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 interface Request {
   id: string;
@@ -23,6 +24,7 @@ interface Request {
   region?: string | null;
   service_type?: string;
   type: 'company' | 'service';
+  tracking_number?: string;
 }
 
 const ClientDashboard = () => {
@@ -109,6 +111,23 @@ const ClientDashboard = () => {
     }
   };
 
+  const getStatusProgress = (status: string) => {
+    switch (status) {
+      case 'pending': return 25;
+      case 'in_progress': return 60;
+      case 'completed': return 100;
+      case 'rejected': return 0;
+      default: return 10;
+    }
+  };
+
+  const getPaymentStatusBadge = (paymentStatus: string | null | undefined) => {
+    if (paymentStatus === 'approved') {
+      return <Badge className="bg-green-500 text-white">{t('status.paid', 'Payé')}</Badge>;
+    }
+    return <Badge className="bg-yellow-500 text-white">{t('status.unpaid', 'Non payé')}</Badge>;
+  };
+
   if (loading || loadingRequests) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -119,6 +138,9 @@ const ClientDashboard = () => {
       </div>
     );
   }
+
+  const totalPaid = requests.filter(r => r.payment_status === 'approved').reduce((sum, r) => sum + (r.estimated_price || 0), 0);
+  const totalPending = requests.filter(r => !r.payment_status || r.payment_status === 'pending').reduce((sum, r) => sum + (r.estimated_price || 0), 0);
 
   return (
     <div className="min-h-screen bg-background">
@@ -150,9 +172,9 @@ const ClientDashboard = () => {
             </div>
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-            <Card className="border-2">
+          {/* Enhanced Stats Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <Card className="border-2 hover:shadow-lg transition-shadow">
               <CardContent className="p-4 flex items-center gap-4">
                 <div className="p-3 rounded-lg bg-primary/10">
                   <FileText className="h-6 w-6 text-primary" />
@@ -163,7 +185,7 @@ const ClientDashboard = () => {
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-2">
+            <Card className="border-2 hover:shadow-lg transition-shadow">
               <CardContent className="p-4 flex items-center gap-4">
                 <div className="p-3 rounded-lg bg-yellow-500/10">
                   <Clock className="h-6 w-6 text-yellow-500" />
@@ -176,10 +198,10 @@ const ClientDashboard = () => {
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-2">
+            <Card className="border-2 hover:shadow-lg transition-shadow">
               <CardContent className="p-4 flex items-center gap-4">
                 <div className="p-3 rounded-lg bg-green-500/10">
-                  <Building2 className="h-6 w-6 text-green-500" />
+                  <CheckCircle2 className="h-6 w-6 text-green-500" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-foreground">
@@ -189,7 +211,37 @@ const ClientDashboard = () => {
                 </div>
               </CardContent>
             </Card>
+            <Card className="border-2 hover:shadow-lg transition-shadow">
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="p-3 rounded-lg bg-primary/10">
+                  <TrendingUp className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-foreground">{totalPaid.toLocaleString()}</p>
+                  <p className="text-sm text-muted-foreground">FCFA {t('status.paid', 'Payé')}</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
+
+          {/* Pending Payment Alert */}
+          {totalPending > 0 && (
+            <Card className="border-2 border-yellow-500/50 bg-yellow-500/5 mb-6">
+              <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <CreditCard className="h-6 w-6 text-yellow-500" />
+                  <div>
+                    <p className="font-semibold text-foreground">
+                      {t('dashboard.pendingPayment', 'Paiements en attente')}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {t('dashboard.pendingPaymentDesc', 'Vous avez des factures à régler')}: <span className="font-bold text-yellow-600">{totalPending.toLocaleString()} FCFA</span>
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {requests.length === 0 ? (
             <Card className="border-2">
@@ -213,15 +265,21 @@ const ClientDashboard = () => {
                 >
                   <CardHeader className="pb-3">
                     <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
-                      <div>
-                        <CardTitle className="text-lg">
-                          {request.type === 'company' 
-                            ? (request.company_name || t('dashboard.companyCreation', 'Création d\'entreprise')) 
-                            : `Service ${request.service_type}`
-                          }
-                        </CardTitle>
-                        <CardDescription className="mt-1">
-                          {t('dashboard.trackingNumber', 'N° de suivi')}: <span className="font-semibold text-foreground">{request.id.slice(0, 8).toUpperCase()}</span>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <CardTitle className="text-lg">
+                            {request.type === 'company' 
+                              ? (request.company_name || t('dashboard.companyCreation', 'Création d\'entreprise')) 
+                              : `Service ${request.service_type}`
+                            }
+                          </CardTitle>
+                          {getPaymentStatusBadge(request.payment_status)}
+                        </div>
+                        <CardDescription className="flex flex-wrap gap-2 items-center">
+                          <span>{t('dashboard.trackingNumber', 'N° de suivi')}:</span>
+                          <span className="font-semibold text-foreground bg-muted px-2 py-0.5 rounded">
+                            {request.tracking_number || request.id.slice(0, 8).toUpperCase()}
+                          </span>
                         </CardDescription>
                       </div>
                       <Badge className={`${getStatusColor(request.status)} text-white`}>
@@ -230,6 +288,15 @@ const ClientDashboard = () => {
                     </div>
                   </CardHeader>
                   <CardContent>
+                    {/* Progress Bar */}
+                    <div className="mb-4">
+                      <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                        <span>{t('dashboard.progress', 'Progression')}</span>
+                        <span>{getStatusProgress(request.status)}%</span>
+                      </div>
+                      <Progress value={getStatusProgress(request.status)} className="h-2" />
+                    </div>
+                    
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                       <div>
                         <p className="text-xs text-muted-foreground uppercase tracking-wide">{t('dashboard.type', 'Type')}</p>
@@ -270,7 +337,7 @@ const ClientDashboard = () => {
                           className="w-full sm:w-auto bg-accent hover:bg-accent/90"
                         >
                           <CreditCard className="mr-2 h-4 w-4" />
-                          Payer maintenant
+                          {t('tracking.payNow', 'Payer maintenant')}
                         </Button>
                       )}
                       <Button 
@@ -281,7 +348,19 @@ const ClientDashboard = () => {
                         className="w-full sm:w-auto"
                         variant="outline"
                       >
-                        {t('dashboard.viewDetails', 'Voir les détails et messagerie')}
+                        <Eye className="mr-2 h-4 w-4" />
+                        {t('dashboard.viewDetails', 'Voir les détails')}
+                      </Button>
+                      <Button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/request/${request.id}?type=${request.type}#messages`);
+                        }}
+                        className="w-full sm:w-auto"
+                        variant="ghost"
+                      >
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                        {t('dashboard.messaging', 'Messagerie')}
                       </Button>
                     </div>
                   </CardContent>

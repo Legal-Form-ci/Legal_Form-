@@ -311,6 +311,15 @@ const CompaniesManagement = () => {
                                 <Eye className="mr-2 h-4 w-4" />
                                 Voir détails
                               </DropdownMenuItem>
+                              {(!request.payment_status || request.payment_status !== 'paid') && (
+                                <DropdownMenuItem 
+                                  onClick={() => navigate(`/admin/invoices?requestId=${request.id}&type=company`)}
+                                  className="text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer"
+                                >
+                                  <CreditCard className="mr-2 h-4 w-4" />
+                                  Générer facture
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuItem className="text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer">
                                 <FileText className="mr-2 h-4 w-4" />
                                 Générer PDF
