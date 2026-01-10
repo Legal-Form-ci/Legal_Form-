@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,8 +10,9 @@ import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import DashboardWelcome from "@/components/DashboardWelcome";
-import { LogOut, Plus, FileText, Building2, Clock, CreditCard, MessageSquare, Eye, TrendingUp, CheckCircle2 } from "lucide-react";
+import { LogOut, Plus, FileText, Building2, Clock, CreditCard, MessageSquare, Eye, TrendingUp, CheckCircle2, Bell } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { useClientRealtimeNotifications } from "@/hooks/useClientRealtimeNotifications";
 
 interface Request {
   id: string;
@@ -45,14 +46,12 @@ const ClientDashboard = () => {
     }
   }, [user, userRole, loading, navigate]);
 
-  useEffect(() => {
-    if (user) {
-      fetchRequests();
-    }
-  }, [user]);
-
-  const fetchRequests = async () => {
+  // Wrap fetchRequests in useCallback for stable reference
+  const fetchRequests = useCallback(async () => {
+    if (!user) return;
+    
     try {
+      setLoadingRequests(true);
       const { data: companyData, error: companyError } = await supabase
         .from('company_requests')
         .select('*')
@@ -87,7 +86,19 @@ const ClientDashboard = () => {
     } finally {
       setLoadingRequests(false);
     }
-  };
+  }, [user, toast, t]);
+
+  // Enable real-time notifications
+  useClientRealtimeNotifications({
+    userId: user?.id,
+    onUpdate: fetchRequests
+  });
+
+  useEffect(() => {
+    if (user) {
+      fetchRequests();
+    }
+  }, [user, fetchRequests]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
