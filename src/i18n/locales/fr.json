@@ -505,5 +505,40 @@
   "terms": {
     "title": "Conditions Générales",
     "subtitle": "Conditions d'utilisation de nos services"
+  },
+  "faq": {
+    "title": "Questions Fréquentes",
+    "subtitle": "Trouvez rapidement les réponses à vos questions sur nos services de création d'entreprise en Côte d'Ivoire.",
+    "searchPlaceholder": "Rechercher une question...",
+    "allCategories": "Toutes les catégories",
+    "results": "résultat(s) pour",
+    "noResults": "Aucun résultat trouvé",
+    "noResultsDesc": "Essayez avec d'autres mots-clés ou consultez toutes les catégories.",
+    "showAll": "Voir toutes les questions",
+    "stillQuestions": "Vous avez encore des questions ?",
+    "stillQuestionsDesc": "Notre équipe est disponible pour répondre à toutes vos questions.",
+    "contactUs": "Nous contacter",
+    "categories": {
+      "companyCreation": "Création d'entreprise",
+      "payment": "Paiement & Tarifs",
+      "process": "Processus & Suivi",
+      "documents": "Documents & Livrables",
+      "services": "Services Additionnels"
+    }
+  },
+  "payment": {
+    "verifying": "Vérification en cours...",
+    "verifyingDesc": "Nous vérifions votre paiement auprès de notre système.",
+    "successTitle": "Paiement réussi !",
+    "successDesc": "Votre paiement a été effectué avec succès. Votre demande est maintenant en cours de traitement par notre équipe.",
+    "failedTitle": "Paiement échoué",
+    "failedDesc": "Le paiement n'a pas pu être complété. Veuillez réessayer ou contacter le support si le problème persiste.",
+    "pendingTitle": "Paiement en attente",
+    "pendingDesc": "Votre paiement est en cours de traitement. Vous recevrez une notification par email une fois confirmé.",
+    "transactionRef": "Référence de transaction",
+    "trackingNumber": "Numéro de suivi",
+    "goToDashboard": "Accéder à mon tableau de bord",
+    "retry": "Réessayer le paiement",
+    "backHome": "Retour à l'accueil"
   }
 }

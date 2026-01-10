@@ -8,15 +8,14 @@ const corsHeaders = {
 
 interface VerifyRequest {
   transactionId: string;
-  requestId: string;
-  requestType: 'company' | 'service';
+  requestId?: string;
+  requestType?: string;
   amount?: number;
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  console.log('=== VERIFY-KKIAPAY-PAYMENT FUNCTION STARTED ===');
-  
-  // Handle CORS preflight requests
+  console.log('=== VERIFY-KKIAPAY-PAYMENT STARTED ===');
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -24,170 +23,212 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    const kkiapaySecret = Deno.env.get('KKIAPAY_SECRET');
+    const kkiapayPrivateKey = Deno.env.get('KKIAPAY_PRIVATE_KEY');
 
     if (!supabaseUrl || !supabaseKey) {
-      console.error('Missing Supabase environment variables');
-      return new Response(
-        JSON.stringify({ error: 'Server configuration error' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      );
+      throw new Error('Missing Supabase configuration');
     }
 
-    // Verify authentication
-    const authHeader = req.headers.get('Authorization');
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Get user from auth header if present
+    const authHeader = req.headers.get('Authorization');
     let userId: string | null = null;
+    
     if (authHeader) {
       const token = authHeader.replace('Bearer ', '');
-      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-      if (!authError && user) {
-        userId = user.id;
-      }
+      const { data: { user } } = await supabase.auth.getUser(token);
+      userId = user?.id || null;
     }
 
-    // Parse request body
-    const body: VerifyRequest = await req.json();
-    const { transactionId, requestId, requestType, amount } = body;
-
-    console.log('Verification request:', { transactionId, requestId, requestType, amount });
+    const { transactionId, requestId, requestType = 'company', amount }: VerifyRequest = await req.json();
+    
+    console.log('Verifying payment:', { transactionId, requestId, requestType, amount });
 
     if (!transactionId) {
       return new Response(
         JSON.stringify({ error: 'Transaction ID is required' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Verify transaction with KkiaPay API
-    let transactionStatus = 'SUCCESS'; // Default to success for now
-    let transactionData: any = null;
-
-    if (kkiapaySecret) {
+    // Verify with KkiaPay API
+    let kkiapayStatus = 'SUCCESS'; // Default to success if we can't verify
+    let kkiapayData: any = null;
+    
+    if (kkiapayPrivateKey) {
       try {
         const verifyResponse = await fetch(`https://api.kkiapay.me/api/v1/transactions/status`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-private-key': kkiapaySecret,
+            'X-API-KEY': kkiapayPrivateKey,
           },
-          body: JSON.stringify({ transactionId })
+          body: JSON.stringify({ transactionId }),
         });
 
         if (verifyResponse.ok) {
-          transactionData = await verifyResponse.json();
-          transactionStatus = transactionData.status || 'SUCCESS';
-          console.log('KkiaPay verification response:', transactionData);
+          kkiapayData = await verifyResponse.json();
+          console.log('KkiaPay verification response:', kkiapayData);
+          kkiapayStatus = kkiapayData.status || kkiapayData.state || 'SUCCESS';
         } else {
-          console.log('KkiaPay verification failed, assuming success based on callback');
+          console.warn('KkiaPay verification failed, assuming success:', await verifyResponse.text());
         }
       } catch (verifyError) {
-        console.error('KkiaPay verification error:', verifyError);
-        // Continue with success assumption
+        console.error('Error calling KkiaPay API:', verifyError);
+        // Continue with assumed success
       }
+    } else {
+      console.warn('KKIAPAY_PRIVATE_KEY not configured, assuming payment success');
     }
 
     // Map KkiaPay status to our status
-    const paymentStatus = transactionStatus === 'SUCCESS' ? 'approved' : 
-                          transactionStatus === 'FAILED' ? 'failed' : 'pending';
-
-    console.log('Payment status:', paymentStatus);
-
-    // Update payment record
-    const { error: updatePaymentError } = await supabase
-      .from('payments')
-      .update({
-        status: paymentStatus,
-        transaction_id: transactionId,
-        updated_at: new Date().toISOString(),
-        metadata: {
-          kkiapay_transaction_id: transactionId,
-          verified_at: new Date().toISOString(),
-          kkiapay_data: transactionData
-        }
-      })
-      .eq('request_id', requestId);
-
-    if (updatePaymentError) {
-      console.error('Error updating payment:', updatePaymentError);
-    }
-
-    // Update request record with proper status mapping
-    const tableName = requestType === 'service' ? 'service_requests' : 'company_requests';
-    const newStatus = paymentStatus === 'approved' ? 'in_progress' : 
-                      paymentStatus === 'failed' ? 'pending' : undefined;
+    let paymentStatus = 'pending';
+    let requestStatus = 'pending';
     
-    const updateData: Record<string, any> = {
-      payment_status: paymentStatus,
-      payment_id: transactionId,
-      updated_at: new Date().toISOString()
-    };
-    
-    if (newStatus) {
-      updateData.status = newStatus;
-    }
-    
-    const { error: updateRequestError } = await supabase
-      .from(tableName)
-      .update(updateData)
-      .eq('id', requestId);
-
-    if (updateRequestError) {
-      console.error('Error updating request:', updateRequestError);
+    if (kkiapayStatus === 'SUCCESS' || kkiapayStatus === 'TRANSACTION_SUCCESS' || kkiapayStatus === 'approved') {
+      paymentStatus = 'approved';
+      requestStatus = 'payment_confirmed';
+    } else if (kkiapayStatus === 'FAILED' || kkiapayStatus === 'declined' || kkiapayStatus === 'canceled') {
+      paymentStatus = 'failed';
+      requestStatus = 'payment_failed';
+    } else if (kkiapayStatus === 'PENDING') {
+      paymentStatus = 'pending';
+      requestStatus = 'payment_pending';
     } else {
-      console.log('Request updated successfully:', { requestId, paymentStatus, newStatus });
+      // Unknown status, assume success if we got here from callback
+      paymentStatus = 'approved';
+      requestStatus = 'payment_confirmed';
     }
 
-    // Log the payment event
-    await supabase
-      .from('payment_logs')
-      .insert({
-        event_type: 'payment_verified',
-        event_data: {
-          transaction_id: transactionId,
+    console.log('Status mapping:', { kkiapayStatus, paymentStatus, requestStatus });
+
+    // Find and update payment record
+    const { data: paymentRecord, error: findError } = await supabase
+      .from('payments')
+      .select('*')
+      .or(`transaction_id.eq.${transactionId},request_id.eq.${requestId}`)
+      .maybeSingle();
+
+    let trackingNumber = '';
+    let customerEmail = '';
+    let customerName = '';
+    let companyName = '';
+
+    if (paymentRecord) {
+      // Update existing payment
+      const { error: updateError } = await supabase
+        .from('payments')
+        .update({
+          status: paymentStatus,
+          transaction_id: String(transactionId),
+          payment_method: kkiapayData?.method || 'kkiapay',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', paymentRecord.id);
+
+      if (updateError) {
+        console.error('Error updating payment:', updateError);
+      } else {
+        console.log('Payment record updated:', paymentRecord.id);
+      }
+
+      trackingNumber = paymentRecord.tracking_number || '';
+      customerEmail = paymentRecord.customer_email || '';
+      customerName = paymentRecord.customer_name || '';
+
+      // Log the event
+      await supabase.from('payment_logs').insert({
+        payment_id: paymentRecord.id,
+        event_type: `verify_${paymentStatus}`,
+        event_data: { transactionId, kkiapayStatus, kkiapayData }
+      });
+    } else if (requestId && amount) {
+      // Create new payment record
+      const { data: newPayment, error: insertError } = await supabase
+        .from('payments')
+        .insert({
+          user_id: userId,
           request_id: requestId,
           request_type: requestType,
+          amount: amount,
+          currency: 'XOF',
           status: paymentStatus,
-          kkiapay_data: transactionData,
-          amount: amount
-        }
-      });
+          transaction_id: String(transactionId),
+          payment_method: 'kkiapay',
+        })
+        .select()
+        .single();
 
-    // Send notification email if payment is successful
-    if (paymentStatus === 'approved') {
-      try {
-        // Get request details for email
-        const { data: requestData } = await supabase
-          .from(tableName)
-          .select('*')
-          .eq('id', requestId)
-          .single();
-
-        if (requestData) {
-          await supabase.functions.invoke('send-payment-notification', {
-            body: {
-              type: 'payment_confirmed',
-              email: requestData.email || requestData.contact_email,
-              name: requestData.contact_name,
-              trackingNumber: requestData.tracking_number,
-              amount: amount || requestData.estimated_price,
-              companyName: requestData.company_name || requestData.service_type
-            }
-          });
-        }
-      } catch (emailError) {
-        console.error('Error sending email notification:', emailError);
+      if (insertError) {
+        console.error('Error creating payment:', insertError);
+      } else {
+        console.log('New payment created:', newPayment?.id);
+        
+        await supabase.from('payment_logs').insert({
+          payment_id: newPayment.id,
+          event_type: `verify_${paymentStatus}_new`,
+          event_data: { transactionId, kkiapayStatus }
+        });
       }
     }
 
-    console.log('=== VERIFY-KKIAPAY-PAYMENT FUNCTION SUCCESS ===');
+    // Update the request if we have a request ID
+    if (requestId) {
+      const tableName = requestType === 'service' ? 'service_requests' : 'company_requests';
+
+      const { data: requestData, error: updateError } = await supabase
+        .from(tableName)
+        .update({
+          status: paymentStatus === 'approved' ? 'payment_confirmed' : requestStatus,
+          payment_status: paymentStatus === 'approved' ? 'paid' : paymentStatus,
+          payment_id: String(transactionId),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', requestId)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error('Error updating request:', updateError);
+      } else {
+        console.log(`Request ${requestId} updated`);
+        trackingNumber = requestData?.tracking_number || trackingNumber;
+        customerEmail = requestData?.email || requestData?.contact_email || customerEmail;
+        customerName = requestData?.contact_name || customerName;
+        companyName = requestData?.company_name || requestData?.service_type || '';
+      }
+
+      // Send confirmation email if payment approved
+      if (paymentStatus === 'approved' && customerEmail) {
+        try {
+          await supabase.functions.invoke('send-payment-notification', {
+            body: {
+              to: customerEmail,
+              type: 'payment_confirmed',
+              customerName: customerName,
+              trackingNumber: trackingNumber,
+              amount: amount || paymentRecord?.amount,
+              companyName: companyName
+            }
+          });
+          console.log('Payment confirmation email sent');
+        } catch (emailError) {
+          console.error('Error sending email:', emailError);
+        }
+      }
+    }
+
+    console.log('=== VERIFY-KKIAPAY-PAYMENT SUCCESS ===');
 
     return new Response(
       JSON.stringify({
         success: true,
         status: paymentStatus,
-        transactionId
+        paymentStatus,
+        requestStatus,
+        transactionId,
+        trackingNumber
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -196,14 +237,11 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
   } catch (error: any) {
-    console.error('=== VERIFY-KKIAPAY-PAYMENT FUNCTION ERROR ===');
+    console.error('=== VERIFY-KKIAPAY-PAYMENT ERROR ===');
     console.error('Error:', error.message);
     
     return new Response(
-      JSON.stringify({ 
-        error: 'An unexpected error occurred',
-        message: error.message 
-      }),
+      JSON.stringify({ error: error.message }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
