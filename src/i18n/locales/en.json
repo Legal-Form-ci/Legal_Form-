@@ -505,5 +505,33 @@
   "terms": {
     "title": "Terms and Conditions",
     "subtitle": "Terms of use for our services"
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "subtitle": "Find quick answers to your questions about our company creation services in Côte d'Ivoire.",
+    "searchPlaceholder": "Search a question...",
+    "allCategories": "All categories",
+    "results": "result(s) for",
+    "noResults": "No results found",
+    "noResultsDesc": "Try different keywords or browse all categories.",
+    "showAll": "Show all questions",
+    "stillQuestions": "Still have questions?",
+    "stillQuestionsDesc": "Our team is available to answer all your questions.",
+    "contactUs": "Contact us"
+  },
+  "payment": {
+    "verifying": "Verifying...",
+    "verifyingDesc": "We are verifying your payment with our system.",
+    "successTitle": "Payment successful!",
+    "successDesc": "Your payment was successful. Your request is now being processed by our team.",
+    "failedTitle": "Payment failed",
+    "failedDesc": "The payment could not be completed. Please try again or contact support.",
+    "pendingTitle": "Payment pending",
+    "pendingDesc": "Your payment is being processed. You will receive an email notification once confirmed.",
+    "transactionRef": "Transaction reference",
+    "trackingNumber": "Tracking number",
+    "goToDashboard": "Go to my dashboard",
+    "retry": "Retry payment",
+    "backHome": "Back to home"
   }
 }
