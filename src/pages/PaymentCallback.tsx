@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { CheckCircle2, XCircle, Loader2, ArrowRight, Home, RefreshCw } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, ArrowRight, Home, RefreshCw, Download, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,8 +8,22 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { downloadReceiptPDF } from "@/utils/pdfGenerator";
 
 type PaymentStatus = 'loading' | 'success' | 'failed' | 'pending';
+
+interface PaymentDetails {
+  transactionId: string;
+  trackingNumber: string;
+  amount: number;
+  clientName: string;
+  clientEmail: string;
+  clientPhone: string;
+  clientCompany?: string;
+  description: string;
+  receiptNumber: string;
+  date: string;
+}
 
 const PaymentCallback = () => {
   const [searchParams] = useSearchParams();
@@ -19,7 +33,9 @@ const PaymentCallback = () => {
   const [status, setStatus] = useState<PaymentStatus>('loading');
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [trackingNumber, setTrackingNumber] = useState<string | null>(null);
+  const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
   const [verifying, setVerifying] = useState(false);
+  const [downloadingPDF, setDownloadingPDF] = useState(false);
 
   useEffect(() => {
     // Get status from URL params (KkiaPay redirects with status)
@@ -79,6 +95,21 @@ const PaymentCallback = () => {
           if (data.trackingNumber) {
             setTrackingNumber(data.trackingNumber);
           }
+          // Store payment details for PDF generation
+          if (data.paymentDetails) {
+            setPaymentDetails({
+              transactionId: txId,
+              trackingNumber: data.trackingNumber || data.paymentDetails.trackingNumber || '',
+              amount: data.paymentDetails.amount || 0,
+              clientName: data.paymentDetails.clientName || '',
+              clientEmail: data.paymentDetails.clientEmail || '',
+              clientPhone: data.paymentDetails.clientPhone || '',
+              clientCompany: data.paymentDetails.companyName || '',
+              description: data.paymentDetails.description || 'Service Legal Form',
+              receiptNumber: `REC-${Date.now().toString().slice(-8)}`,
+              date: new Date().toISOString()
+            });
+          }
           toast({
             title: t('payment.successTitle', 'Paiement confirmé !'),
             description: t('payment.successDesc', 'Votre paiement a été vérifié avec succès.')
@@ -98,6 +129,39 @@ const PaymentCallback = () => {
       }
     } finally {
       setVerifying(false);
+    }
+  };
+
+  const handleDownloadReceipt = async () => {
+    setDownloadingPDF(true);
+    try {
+      const receiptData = paymentDetails || {
+        receiptNumber: `REC-${Date.now().toString().slice(-8)}`,
+        date: new Date().toISOString(),
+        clientName: 'Client',
+        clientEmail: '',
+        clientPhone: '',
+        amount: 0,
+        description: 'Service Legal Form',
+        trackingNumber: trackingNumber || '',
+        transactionId: transactionId || ''
+      };
+
+      downloadReceiptPDF(receiptData);
+      
+      toast({
+        title: t('payment.receiptDownloaded', 'Reçu téléchargé'),
+        description: t('payment.receiptDownloadedDesc', 'Votre reçu de paiement a été téléchargé.')
+      });
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast({
+        title: t('payment.receiptError', 'Erreur'),
+        description: t('payment.receiptErrorDesc', 'Impossible de générer le reçu. Veuillez réessayer.'),
+        variant: 'destructive'
+      });
+    } finally {
+      setDownloadingPDF(false);
     }
   };
 
@@ -179,6 +243,23 @@ const PaymentCallback = () => {
               )}
               
               <div className="flex flex-col gap-3 pt-4">
+                {status === 'success' && (
+                  <Button 
+                    onClick={handleDownloadReceipt}
+                    variant="outline"
+                    className="w-full border-primary text-primary hover:bg-primary hover:text-white"
+                    size="lg"
+                    disabled={downloadingPDF}
+                  >
+                    {downloadingPDF ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Download className="mr-2 h-4 w-4" />
+                    )}
+                    {t('payment.downloadReceipt', 'Télécharger le reçu PDF')}
+                  </Button>
+                )}
+                
                 <Button 
                   onClick={() => navigate('/client/dashboard')}
                   className="w-full"
