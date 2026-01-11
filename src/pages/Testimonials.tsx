@@ -12,25 +12,28 @@ interface Testimonial {
   id: string; name: string; company: string; region: string; type: string; rating: number; comment: string; image?: string;
 }
 
-const defaultTestimonials: Testimonial[] = [
-  { id: "1", name: "KOFFI Innocent", company: "AGRICAPITAL SARL", region: "Daloa", type: "SARL", rating: 5, comment: "Service rapide et professionnel. Je recommande vivement.", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face" },
-  { id: "2", name: "KOUASSI Marie", company: "TECHNOVATE SARL", region: "Abidjan", type: "SARL", rating: 5, comment: "Excellent accompagnement ! L'équipe est réactive.", image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face" },
-  { id: "3", name: "DIALLO Amadou", company: "BATIR CI SARL", region: "Bouaké", type: "SARL", rating: 5, comment: "Processus simplifié, équipe compétente.", image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face" },
-];
-
 const Testimonials = () => {
   const { t } = useTranslation();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [testimonials, setTestimonials] = useState<Testimonial[]>(defaultTestimonials);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchTestimonials = async () => {
       try {
-        const { data, error } = await supabase.from('created_companies').select('id, name, type, region, rating, testimonial, founder_name').eq('is_visible', true).not('testimonial', 'is', null).order('created_at', { ascending: false });
-        if (!error && data && data.length > 0) {
-          const mapped = data.map(item => ({ id: item.id, name: item.founder_name || "Client", company: item.name, region: item.region, type: item.type, rating: item.rating || 5, comment: item.testimonial || "" }));
-          setTestimonials([...mapped, ...defaultTestimonials]);
+        const { data, error } = await supabase.from('created_companies').select('id, name, type, region, rating, testimonial, founder_name, founder_photo_url, logo_url').eq('is_visible', true).not('testimonial', 'is', null).order('created_at', { ascending: false });
+        if (!error && data) {
+          const mapped = data.map(item => ({ 
+            id: item.id, 
+            name: item.founder_name || "Client", 
+            company: item.name, 
+            region: item.region, 
+            type: item.type, 
+            rating: item.rating || 5, 
+            comment: item.testimonial || "",
+            image: item.founder_photo_url || item.logo_url || undefined
+          }));
+          setTestimonials(mapped);
         }
       } catch (error) { console.error("Error:", error); }
       finally { setIsLoading(false); }
@@ -60,19 +63,51 @@ const Testimonials = () => {
             <Card className="border-2 border-primary/20"><CardContent className="p-4 text-center"><div className="text-3xl font-bold text-primary mb-2">7j</div><p className="text-xs text-muted-foreground">{t('testimonials.averageTime')}</p></CardContent></Card>
           </div>
           <div className="relative mb-16">
-            <div className="flex items-center justify-between mb-6"><h2 className="text-2xl font-bold">{t('testimonials.title')}</h2><div className="flex gap-2"><Button variant="outline" size="icon" onClick={prevSlide}><ChevronLeft className="h-5 w-5" /></Button><Button variant="outline" size="icon" onClick={nextSlide}><ChevronRight className="h-5 w-5" /></Button></div></div>
-            {isLoading ? <div className="flex justify-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div> : (
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold">{t('testimonials.title')}</h2>
+              {testimonials.length > 3 && (
+                <div className="flex gap-2">
+                  <Button variant="outline" size="icon" onClick={prevSlide}><ChevronLeft className="h-5 w-5" /></Button>
+                  <Button variant="outline" size="icon" onClick={nextSlide}><ChevronRight className="h-5 w-5" /></Button>
+                </div>
+              )}
+            </div>
+            {isLoading ? (
+              <div className="flex justify-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>
+            ) : testimonials.length === 0 ? (
+              <div className="text-center py-16">
+                <p className="text-muted-foreground text-lg">{t('testimonials.noTestimonials') || 'Aucun témoignage pour le moment'}</p>
+                <p className="text-sm text-muted-foreground mt-2">{t('testimonials.beFirst') || 'Soyez le premier à partager votre expérience !'}</p>
+              </div>
+            ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {visibleTestimonials.map((t, i) => (
-                  <Card key={`${t.id}-${i}`} className="border-2 hover:shadow-strong transition-all">
+                {visibleTestimonials.map((testimonial, i) => (
+                  <Card key={`${testimonial.id}-${i}`} className="border-2 hover:shadow-strong transition-all">
                     <CardContent className="p-6">
                       <div className="flex items-start gap-4 mb-4">
-                        <div className="relative w-16 h-16 rounded-full overflow-hidden bg-muted"><img src={t.image || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"} alt={t.name} className="w-full h-full object-cover" /></div>
-                        <div className="flex-1"><p className="font-semibold">{t.name}</p><p className="text-sm text-primary font-medium">{t.company}</p><div className="flex items-center gap-1 mt-1">{[...Array(t.rating)].map((_, i) => <Star key={i} className="h-3 w-3 text-accent fill-current" />)}</div></div>
+                        <div className="relative w-16 h-16 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                          {testimonial.image ? (
+                            <img src={testimonial.image} alt={testimonial.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-2xl font-bold text-primary">{testimonial.name.charAt(0)}</span>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-semibold">{testimonial.name}</p>
+                          <p className="text-sm text-primary font-medium">{testimonial.company}</p>
+                          <div className="flex items-center gap-1 mt-1">
+                            {[...Array(testimonial.rating)].map((_, starIdx) => (
+                              <Star key={starIdx} className="h-3 w-3 text-accent fill-current" />
+                            ))}
+                          </div>
+                        </div>
                       </div>
                       <Quote className="h-6 w-6 text-primary/20 mb-2" />
-                      <p className="text-muted-foreground mb-4 italic text-sm">"{t.comment}"</p>
-                      <div className="flex items-center gap-2 pt-4 border-t"><span className="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full">{t.type}</span><span className="text-xs text-muted-foreground">{t.region}</span></div>
+                      <p className="text-muted-foreground mb-4 italic text-sm">"{testimonial.comment}"</p>
+                      <div className="flex items-center gap-2 pt-4 border-t">
+                        <span className="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full">{testimonial.type}</span>
+                        <span className="text-xs text-muted-foreground">{testimonial.region}</span>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}

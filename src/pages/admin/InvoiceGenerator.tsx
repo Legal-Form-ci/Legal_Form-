@@ -442,19 +442,18 @@ const InvoiceGenerator = () => {
                     <SelectTrigger>
                       <SelectValue placeholder="Choisir un demandeur existant" />
                     </SelectTrigger>
-                    <SelectContent>
-                      {clients.map(client => (
-                        <SelectItem key={client.id} value={client.id}>
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{client.contact_name}</span>
-                            <span className="text-muted-foreground">-</span>
-                            <span className="text-sm text-muted-foreground">{client.company_name || client.service_type}</span>
-                            {client.payment_status !== 'approved' && client.payment_status !== 'completed' && (
-                              <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">Non payé</span>
-                            )}
-                          </div>
-                        </SelectItem>
-                      ))}
+                    <SelectContent className="max-h-80">
+                      {clients.length === 0 ? (
+                        <div className="p-4 text-center text-muted-foreground">
+                          Aucun demandeur trouvé
+                        </div>
+                      ) : (
+                        clients.map(client => (
+                          <SelectItem key={client.id} value={client.id}>
+                            {client.contact_name} - {client.company_name || client.service_type || 'N/A'} {client.payment_status !== 'approved' && client.payment_status !== 'completed' && client.payment_status !== 'paid' ? '(Non payé)' : ''}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 )}
