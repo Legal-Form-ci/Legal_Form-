@@ -26,6 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import AdminLayout from "./AdminLayout";
+import { exportCompanyRequests } from "@/utils/exportUtils";
 
 interface CompanyRequest {
   id: string;
@@ -182,9 +183,15 @@ const CompaniesManagement = () => {
             <h1 className="text-3xl font-bold text-white">Créations d'entreprise</h1>
             <p className="text-slate-400 mt-1">{filteredRequests.length} demande(s) sur {requests.length}</p>
           </div>
-          <Button onClick={() => {}} className="bg-primary hover:bg-primary/90">
+          <Button 
+            onClick={() => {
+              exportCompanyRequests(requests);
+              toast({ title: "Export CSV lancé", description: "Le fichier sera téléchargé automatiquement" });
+            }} 
+            className="bg-primary hover:bg-primary/90"
+          >
             <Download className="mr-2 h-4 w-4" />
-            Exporter
+            Exporter CSV
           </Button>
         </div>
 
