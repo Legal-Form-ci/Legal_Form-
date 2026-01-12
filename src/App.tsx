@@ -54,6 +54,10 @@ import Terms from "./pages/Terms";
 import PaymentCallback from "./pages/PaymentCallback";
 import Payment from "./pages/Payment";
 import FAQ from "./pages/FAQ";
+import News from "./pages/News";
+import NewsManagement from "./pages/admin/NewsManagement";
+import DatabaseManager from "./pages/admin/DatabaseManager";
+import WelcomePopup from "./components/WelcomePopup";
 
 const queryClient = new QueryClient();
 
@@ -131,12 +135,17 @@ const App = () => (
           <Route path="/ebook/:slug" element={<EbookDownload />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/questions-frequentes" element={<FAQ />} />
+          <Route path="/actualites" element={<News />} />
+          <Route path="/news" element={<News />} />
+          <Route path="/admin/news" element={<NewsManagement />} />
+          <Route path="/admin/database" element={<DatabaseManager />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Toaster />
         <SonnerToaster />
         <LexIA />
+        <WelcomePopup />
       </BrowserRouter>
       <VercelAnalytics />
       <SpeedInsights />

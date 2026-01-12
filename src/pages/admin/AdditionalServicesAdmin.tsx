@@ -168,10 +168,20 @@ const AdditionalServicesAdmin = () => {
             <p className="text-muted-foreground">Gérez les demandes de services additionnels</p>
           </div>
         </div>
-        <Button onClick={fetchRequests} variant="outline">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Actualiser
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => {
+            import('@/utils/exportUtils').then(({ exportServiceRequestsToCSV }) => {
+              exportServiceRequestsToCSV(requests as any);
+            });
+          }} variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
+          <Button onClick={fetchRequests} variant="outline">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Actualiser
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
