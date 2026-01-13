@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { exportPaymentsToCSV } from "@/utils/exportUtils";
 import AdminLayout from "./AdminLayout";
 import { ArrowLeft, CreditCard, DollarSign, TrendingUp, Clock, FileText, Download } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from 'recharts';
@@ -212,11 +213,7 @@ const PaymentsDashboard = () => {
             <h1 className="text-3xl font-bold text-white">{t('admin.paymentsManagement', 'Gestion des Paiements')}</h1>
             <p className="text-slate-400 mt-1">{t('admin.paymentsTracking', 'Suivi des paiements et transactions')}</p>
           </div>
-          <Button onClick={() => {
-            import('@/utils/exportUtils').then(({ exportPaymentsToCSV }) => {
-              exportPaymentsToCSV(payments);
-            });
-          }} className="bg-primary hover:bg-primary/90">
+          <Button onClick={() => exportPaymentsToCSV(payments)} className="bg-primary hover:bg-primary/90">
             <Download className="mr-2 h-4 w-4" />
             {t('admin.exportCSV', 'Exporter CSV')}
           </Button>

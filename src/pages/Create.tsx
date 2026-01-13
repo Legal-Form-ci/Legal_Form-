@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Building2, MapPin, FileText, CheckCircle2, Users, UserCircle, Plus, Trash2, IdCard } from "lucide-react";
+import { Building2, MapPin, FileText, CheckCircle2, Users, UserCircle, Plus, Trash2, IdCard, Gift, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -95,9 +95,50 @@ const Create = () => {
     faceDetected: boolean;
   } | null>(null);
   
+  // Referral system
+  const [searchParams] = useSearchParams();
+  const [referralCode, setReferralCode] = useState("");
+  const [referrerName, setReferrerName] = useState("");
+  const [isValidatingReferral, setIsValidatingReferral] = useState(false);
+  
   const { user, loading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Check for referral code in URL params
+  useEffect(() => {
+    const refCode = searchParams.get('ref');
+    if (refCode) {
+      setReferralCode(refCode.toUpperCase());
+      validateReferralCode(refCode.toUpperCase());
+    }
+  }, [searchParams]);
+  
+  const validateReferralCode = async (code: string) => {
+    if (!code || code.length < 6) {
+      setReferrerName("");
+      return;
+    }
+    
+    setIsValidatingReferral(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('referral_code', code.toUpperCase())
+        .maybeSingle();
+      
+      if (data && data.full_name) {
+        setReferrerName(data.full_name);
+      } else {
+        setReferrerName("");
+      }
+    } catch (error) {
+      console.error('Error validating referral code:', error);
+    } finally {
+      setIsValidatingReferral(false);
+    }
+  };
 
   useEffect(() => {
     if (!loading && !user) {
@@ -185,7 +226,8 @@ const Create = () => {
     setIsSubmitting(true);
     
     try {
-      const estimatedPrice = calculatePrice();
+      const hasValidReferral = !!(referralCode && referrerName);
+      const estimatedPrice = calculatePrice(hasValidReferral);
       
       // Create the company request
       const { data: requestData, error: requestError } = await supabase
@@ -205,6 +247,8 @@ const Create = () => {
           additional_services: additionalServices,
           estimated_price: estimatedPrice,
           status: 'pending',
+          referrer_code: hasValidReferral ? referralCode : null,
+          discount_applied: hasValidReferral ? 10000 : 0,
         })
         .select()
         .single();
@@ -388,6 +432,35 @@ const Create = () => {
               {/* Step 1: Company Identification */}
               {step === 1 && (
                 <div className="space-y-4">
+                  {/* Referral Code Section */}
+                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-3">
+                    <div className="flex items-center gap-2 text-primary">
+                      <Gift className="h-5 w-5" />
+                      <Label className="font-semibold">Code Parrain (optionnel)</Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Avez-vous été référé ? Entrez le code de votre parrain pour bénéficier de -10 000 FCFA sur votre création.
+                    </p>
+                    <Input
+                      value={referralCode}
+                      onChange={(e) => {
+                        const code = e.target.value.toUpperCase();
+                        setReferralCode(code);
+                        if (code.length >= 6) validateReferralCode(code);
+                      }}
+                      placeholder="Ex: A1B2C3D4"
+                      className="uppercase"
+                    />
+                    {isValidatingReferral && <p className="text-sm text-muted-foreground">Vérification...</p>}
+                    {referrerName && (
+                      <div className="flex items-center gap-2 text-green-600 bg-green-50 p-2 rounded">
+                        <User className="h-4 w-4" />
+                        <span className="text-sm font-medium">Parrain: {referrerName}</span>
+                        <CheckCircle2 className="h-4 w-4 ml-auto" />
+                      </div>
+                    )}
+                  </div>
+                  
                   <div>
                     <Label>{t('create.structureType', 'Forme Juridique')} *</Label>
                     <Select 

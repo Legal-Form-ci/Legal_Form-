@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { exportServiceRequestsToCSV } from "@/utils/exportUtils";
 import { 
   ArrowLeft, 
   Search, 
@@ -169,11 +170,7 @@ const AdditionalServicesAdmin = () => {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => {
-            import('@/utils/exportUtils').then(({ exportServiceRequestsToCSV }) => {
-              exportServiceRequestsToCSV(requests as any);
-            });
-          }} variant="outline">
+          <Button onClick={() => exportServiceRequestsToCSV(requests as any)} variant="outline">
             <Download className="h-4 w-4 mr-2" />
             Export CSV
           </Button>
