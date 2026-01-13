@@ -140,9 +140,11 @@ const Create = () => {
 
   const isUnipersonnelle = companyData.structureType === 'sarlu' || companyData.structureType === 'sasu' || companyData.structureType === 'ei';
 
-  const calculatePrice = () => {
+  const calculatePrice = (hasReferral: boolean = false) => {
     const isAbidjan = locationData.city.toLowerCase().includes('abidjan');
-    return isAbidjan ? 180000 : 150000;
+    const basePrice = isAbidjan ? 199000 : 169000;
+    // Apply 10,000 FCFA discount if referred
+    return hasReferral ? basePrice - 10000 : basePrice;
   };
 
   const addAssociate = () => {

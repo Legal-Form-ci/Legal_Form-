@@ -92,6 +92,9 @@ export const exportServiceRequests = (requests: any[]): void => {
   exportToCSV(requests, columns, `demandes-services-${date}`);
 };
 
+// Alias for AdditionalServicesAdmin
+export const exportServiceRequestsToCSV = exportServiceRequests;
+
 // Export payments
 export const exportPayments = (payments: any[]): void => {
   const columns: ExportColumn[] = [
@@ -111,6 +114,9 @@ export const exportPayments = (payments: any[]): void => {
   const date = new Date().toISOString().split('T')[0];
   exportToCSV(payments, columns, `paiements-${date}`);
 };
+
+// Alias for PaymentsDashboard
+export const exportPaymentsToCSV = exportPayments;
 
 // Export clients (profiles)
 export const exportClients = (clients: any[]): void => {

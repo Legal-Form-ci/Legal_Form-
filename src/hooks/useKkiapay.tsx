@@ -126,8 +126,8 @@ export const useKkiapay = (options: UseKkiapayOptions = {}) => {
   }, [isReady]);
 
   const openPayment = useCallback((config: Omit<KkiapayConfig, 'key'>) => {
-    // Public API key from KKIAPAY dashboard
-    const kkiapayPublicKey = '193bbb7e7387d1c3ac16ced9d47fe52fad2b228e';
+    // Public API key from KKIAPAY dashboard - Legal Form production key
+    const kkiapayPublicKey = 'pk_3b175a70f8a3856ad670ecdd7a3f81b6ffc8b7ff439fbe3268b0a50f996bb6bd';
     
     if (typeof window.openKkiapayWidget !== 'function') {
       console.error('KkiaPay SDK not loaded yet');

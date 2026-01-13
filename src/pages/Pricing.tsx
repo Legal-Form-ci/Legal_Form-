@@ -9,7 +9,7 @@ const Pricing = () => {
   const packages = [
     {
       name: "Pack Création Abidjan",
-      price: "180 000 FCFA",
+      price: "199 000 FCFA",
       description: "Création complète de votre entreprise à Abidjan",
       features: [
         "Rédaction de statuts",
@@ -21,13 +21,14 @@ const Pricing = () => {
         "Numéro Télédéclarant (NTD)",
         "Avis de constitution",
         "Journal",
-        "Déclaration de Souscription et Versement (DSV)"
+        "Déclaration de Souscription et Versement (DSV)",
+        "Réduction parrainage : -10 000 FCFA"
       ],
       recommended: true
     },
     {
       name: "Pack Création Intérieur",
-      price: "À partir de 150 000 FCFA",
+      price: "À partir de 169 000 FCFA",
       description: "Création complète selon votre région",
       features: [
         "Rédaction de statuts",
@@ -39,7 +40,8 @@ const Pricing = () => {
         "Numéro Télédéclarant (NTD)",
         "Avis de constitution",
         "Journal",
-        "Déclaration de Souscription et Versement (DSV)"
+        "Déclaration de Souscription et Versement (DSV)",
+        "Réduction parrainage : -10 000 FCFA"
       ],
       recommended: false
     }
