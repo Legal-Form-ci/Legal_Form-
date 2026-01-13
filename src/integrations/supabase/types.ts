@@ -138,6 +138,7 @@ export type Database = {
           company_name: string
           contact_name: string
           created_at: string
+          discount_applied: number | null
           email: string
           estimated_price: number | null
           id: string
@@ -148,6 +149,8 @@ export type Database = {
           payment_id: string | null
           payment_status: string | null
           phone: string
+          referrer_code: string | null
+          referrer_id: string | null
           region: string | null
           sigle: string | null
           status: string
@@ -172,6 +175,7 @@ export type Database = {
           company_name: string
           contact_name: string
           created_at?: string
+          discount_applied?: number | null
           email: string
           estimated_price?: number | null
           id?: string
@@ -182,6 +186,8 @@ export type Database = {
           payment_id?: string | null
           payment_status?: string | null
           phone: string
+          referrer_code?: string | null
+          referrer_id?: string | null
           region?: string | null
           sigle?: string | null
           status?: string
@@ -206,6 +212,7 @@ export type Database = {
           company_name?: string
           contact_name?: string
           created_at?: string
+          discount_applied?: number | null
           email?: string
           estimated_price?: number | null
           id?: string
@@ -216,6 +223,8 @@ export type Database = {
           payment_id?: string | null
           payment_status?: string | null
           phone?: string
+          referrer_code?: string | null
+          referrer_id?: string | null
           region?: string | null
           sigle?: string | null
           status?: string
@@ -596,6 +605,10 @@ export type Database = {
           full_name: string | null
           id: string
           phone: string | null
+          referral_code: string | null
+          referral_count: number | null
+          referral_earnings: number | null
+          referral_link: string | null
           updated_at: string
           user_id: string
         }
@@ -605,6 +618,10 @@ export type Database = {
           full_name?: string | null
           id?: string
           phone?: string | null
+          referral_code?: string | null
+          referral_count?: number | null
+          referral_earnings?: number | null
+          referral_link?: string | null
           updated_at?: string
           user_id: string
         }
@@ -614,6 +631,10 @@ export type Database = {
           full_name?: string | null
           id?: string
           phone?: string | null
+          referral_code?: string | null
+          referral_count?: number | null
+          referral_earnings?: number | null
+          referral_link?: string | null
           updated_at?: string
           user_id?: string
         }

@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ArrowRight, Building2, FileText, Users, Shield, CheckCircle2, Star, Lightbulb, DollarSign, Palette, GraduationCap } from "lucide-react";
+import { ArrowRight, Building2, FileText, Users, Shield, CheckCircle2, Star, Lightbulb, DollarSign, Palette, GraduationCap, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import NewsSection from "@/components/NewsSection";
 import heroBackground from "@/assets/hero-bg.jpg";
 
 const Index = () => {
@@ -108,7 +109,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      {/* Hero Section */}
+      {/* Hero Section - Split Layout */}
       <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden">
         <div 
           className="absolute inset-0 bg-gradient-hero"
@@ -127,27 +128,64 @@ const Index = () => {
         </div>
 
         <div className="container relative mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl">
-            <h1 className="font-heading font-bold text-4xl sm:text-5xl lg:text-6xl xl:text-7xl text-white mb-6 leading-tight animate-in fade-in slide-in-from-bottom-4 duration-1000">
-              {t('home.hero.title', 'Transformez votre idée en une')}{" "}
-              <span className="text-accent">{t('home.hero.highlight', 'entreprise viable')}</span>
-            </h1>
-            <p className="text-lg sm:text-xl lg:text-2xl text-white/90 mb-8 max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-150">
-              {t('home.hero.subtitle', 'Créer, gérer et accompagner votre entreprise en Côte d\'Ivoire et partout dans le monde.')}
-            </p>
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12 items-start">
+            {/* Left side - Main CTA */}
+            <div className="lg:col-span-3">
+              <h1 className="font-heading font-bold text-3xl sm:text-4xl lg:text-5xl xl:text-6xl text-white mb-6 leading-tight animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                {t('home.hero.title', 'Transformez votre idée en une')}{" "}
+                <span className="text-accent">{t('home.hero.highlight', 'entreprise viable')}</span>
+              </h1>
+              <p className="text-lg sm:text-xl text-white/90 mb-6 max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-150">
+                {t('home.hero.subtitle', 'Créer, gérer et accompagner votre entreprise en Côte d\'Ivoire et partout dans le monde.')}
+              </p>
+              
+              {/* Referral promo banner */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-6 border border-white/20 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-200">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-accent rounded-lg">
+                    <Gift className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold text-sm">Programme Parrainage</p>
+                    <p className="text-white/80 text-xs">
+                      Gagnez 10 000 FCFA en parrainant un proche. Votre filleul bénéficie aussi de -10 000 FCFA !
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-4 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
+                <Link to="/create">
+                  <Button size="lg" className="bg-accent hover:bg-accent/90 text-white shadow-strong text-lg px-8 py-6 h-auto font-semibold group">
+                    {t('home.hero.cta', 'Créer mon entreprise')}
+                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </Link>
+                <Link to="/services">
+                  <Button size="lg" variant="outline" className="border-2 border-white bg-white text-primary hover:bg-white/90 hover:text-primary text-lg px-8 py-6 h-auto font-bold">
+                    {t('home.hero.services', 'Nos services')}
+                  </Button>
+                </Link>
+              </div>
+              
+              {/* Pricing highlight */}
+              <div className="mt-8 flex flex-wrap gap-4 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-400">
+                <div className="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2 border border-white/20">
+                  <p className="text-white/80 text-xs">Abidjan</p>
+                  <p className="text-white font-bold">199 000 FCFA</p>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2 border border-white/20">
+                  <p className="text-white/80 text-xs">Intérieur du pays</p>
+                  <p className="text-white font-bold">À partir de 169 000 FCFA</p>
+                </div>
+              </div>
+            </div>
             
-            <div className="flex flex-col sm:flex-row gap-4 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
-              <Link to="/create">
-                <Button size="lg" className="bg-accent hover:bg-accent/90 text-white shadow-strong text-lg px-8 py-6 h-auto font-semibold group">
-                  {t('home.hero.cta', 'Créer mon entreprise')}
-                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
-              <Link to="/services">
-                <Button size="lg" variant="outline" className="border-2 border-white bg-white text-red-600 hover:bg-white/90 hover:text-red-700 text-lg px-8 py-6 h-auto font-bold">
-                  {t('home.hero.services', 'Nos services')}
-                </Button>
-              </Link>
+            {/* Right side - News Section */}
+            <div className="lg:col-span-2 animate-in fade-in slide-in-from-right-4 duration-1000 delay-300">
+              <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border border-white/10">
+                <NewsSection />
+              </div>
             </div>
           </div>
         </div>

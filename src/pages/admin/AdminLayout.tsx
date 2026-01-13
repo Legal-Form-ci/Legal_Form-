@@ -16,7 +16,11 @@ import {
   X,
   ChevronDown,
   BarChart3,
-  Briefcase
+  Briefcase,
+  Newspaper,
+  Database,
+  Sun,
+  Moon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +41,7 @@ const AdminLayout = ({ children }: { children?: React.ReactNode }) => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
   
   // Real-time notifications
   const { 
@@ -63,14 +68,21 @@ const AdminLayout = ({ children }: { children?: React.ReactNode }) => {
     { label: "Demandes de services", href: "/admin/services", icon: Briefcase },
     { label: "Tickets", href: "/admin/tickets", icon: MessageSquare, badge: 3 },
     { label: "Conversations Legal Pro", href: "/admin/lexia", icon: MessageSquare },
+    { label: "Actualités", href: "/admin/news", icon: Newspaper },
     { label: "Documents ID", href: "/admin/identity-documents", icon: FileText },
     { label: "Factures", href: "/admin/invoices", icon: FileText },
     { label: "Paiements", href: "/admin/payments", icon: CreditCard },
+    { label: "Base de données", href: "/admin/database", icon: Database },
     { label: "Témoignages", href: "/admin/testimonials", icon: Star },
     { label: "Utilisateurs internes", href: "/admin/team", icon: Users },
     { label: "Statistiques", href: "/admin/analytics", icon: BarChart3 },
     { label: "Paramètres", href: "/admin/settings", icon: Settings },
   ];
+
+  const toggleTheme = () => {
+    setIsDarkMode(!isDarkMode);
+    // Could integrate with next-themes for full app theming
+  };
 
   const isActive = (href: string) => location.pathname === href;
 
@@ -142,6 +154,14 @@ const AdminLayout = ({ children }: { children?: React.ReactNode }) => {
               />
             </div>
           )}
+          <Button
+            variant="ghost"
+            onClick={toggleTheme}
+            className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700"
+          >
+            {isDarkMode ? <Sun className="h-5 w-5 mr-3" /> : <Moon className="h-5 w-5 mr-3" />}
+            {sidebarOpen && (isDarkMode ? "Mode clair" : "Mode sombre")}
+          </Button>
           <Button
             variant="ghost"
             onClick={signOut}
