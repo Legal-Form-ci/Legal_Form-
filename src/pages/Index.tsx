@@ -83,11 +83,12 @@ const Index = () => {
 
   const testimonials = [
     {
-      name: "KOFFI Innocent",
+      name: "Inocent KOFFI",
       company: "AGRICAPITAL SARL",
       region: "Daloa",
       rating: 5,
       comment: t('home.testimonials.koffi', 'Service rapide et professionnel. L\'équipe Legal Form a été disponible à chaque étape.'),
+      logo: "/images/agricapital-logo.jpg",
     },
     {
       name: "KOUASSI Marie",
