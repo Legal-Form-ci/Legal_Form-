@@ -49,81 +49,104 @@ const formatDateShort = (dateStr: string): string => {
   });
 };
 
-// Draw official stamp with realistic design
-const drawOfficialStamp = (doc: jsPDF, x: number, y: number, size: number = 50): void => {
-  const primaryColor: [number, number, number] = [0, 124, 122];
-  
-  // Outer circle
-  doc.setDrawColor(...primaryColor);
-  doc.setLineWidth(2);
-  doc.circle(x, y, size);
-  
-  // Inner circle
-  doc.setLineWidth(1);
-  doc.circle(x, y, size - 8);
-  
-  // Company name around the circle (top)
-  doc.setTextColor(...primaryColor);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.text('LEGAL FORM CI', x, y - size + 18, { align: 'center' });
-  
-  // Center emblem area
-  doc.setFillColor(...primaryColor);
-  doc.circle(x, y, 15, 'F');
-  
-  // White text in center
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(7);
-  doc.setFont('helvetica', 'bold');
-  doc.text('LF', x, y + 2, { align: 'center' });
-  
-  // Status text
-  doc.setTextColor(...primaryColor);
-  doc.setFontSize(7);
-  doc.setFont('helvetica', 'bold');
-  doc.text('PAIEMENT VALIDÉ', x, y + size - 18, { align: 'center' });
-  
-  // Location at bottom
-  doc.setFontSize(6);
-  doc.text('ABIDJAN - CÔTE D\'IVOIRE', x, y + size - 10, { align: 'center' });
+// Load image as base64
+const loadImageAsBase64 = async (url: string): Promise<string | null> => {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error('Error loading image:', error);
+    return null;
+  }
 };
 
-// Draw signature line with actual signature style
-const drawSignature = (doc: jsPDF, x: number, y: number): void => {
-  const primaryColor: [number, number, number] = [0, 124, 122];
+// Draw official stamp with real image or fallback
+const drawOfficialStamp = async (doc: jsPDF, x: number, y: number, size: number = 50): Promise<void> => {
+  const stampImage = await loadImageAsBase64('/images/cachet-legal-form.png');
+  
+  if (stampImage) {
+    // Draw the real stamp image
+    doc.addImage(stampImage, 'PNG', x - size, y - size, size * 2, size * 2);
+  } else {
+    // Fallback to drawn stamp
+    const primaryColor: [number, number, number] = [0, 124, 122];
+    
+    doc.setDrawColor(...primaryColor);
+    doc.setLineWidth(2);
+    doc.circle(x, y, size);
+    
+    doc.setLineWidth(1);
+    doc.circle(x, y, size - 8);
+    
+    doc.setTextColor(...primaryColor);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('LEGAL FORM CI', x, y - size + 18, { align: 'center' });
+    
+    doc.setFillColor(...primaryColor);
+    doc.circle(x, y, 15, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'bold');
+    doc.text('LF', x, y + 2, { align: 'center' });
+    
+    doc.setTextColor(...primaryColor);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'bold');
+    doc.text('PAIEMENT VALIDÉ', x, y + size - 18, { align: 'center' });
+    
+    doc.setFontSize(6);
+    doc.text('ABIDJAN - CÔTE D\'IVOIRE', x, y + size - 10, { align: 'center' });
+  }
+};
+
+// Draw signature with real image or fallback
+const drawSignature = async (doc: jsPDF, x: number, y: number): Promise<void> => {
+  const signatureImage = await loadImageAsBase64('/images/signature-dirigeant.png');
   const textColor: [number, number, number] = [26, 26, 26];
   
-  // Signature curves (handwritten style)
-  doc.setDrawColor(...primaryColor);
-  doc.setLineWidth(0.8);
-  
-  // First curve
-  doc.line(x - 30, y - 15, x - 15, y - 20);
-  doc.line(x - 15, y - 20, x, y - 10);
-  doc.line(x, y - 10, x + 10, y - 18);
-  doc.line(x + 10, y - 18, x + 25, y - 12);
-  
-  // Second curve (underline flourish)
-  doc.line(x - 25, y - 8, x + 30, y - 8);
+  if (signatureImage) {
+    // Draw the real signature image
+    doc.addImage(signatureImage, 'PNG', x - 40, y - 30, 80, 40);
+  } else {
+    // Fallback to drawn signature
+    const primaryColor: [number, number, number] = [0, 124, 122];
+    
+    doc.setDrawColor(...primaryColor);
+    doc.setLineWidth(0.8);
+    
+    doc.line(x - 30, y - 15, x - 15, y - 20);
+    doc.line(x - 15, y - 20, x, y - 10);
+    doc.line(x, y - 10, x + 10, y - 18);
+    doc.line(x + 10, y - 18, x + 25, y - 12);
+    
+    doc.line(x - 25, y - 8, x + 30, y - 8);
+  }
   
   // Signature line
   doc.setDrawColor(...textColor);
   doc.setLineWidth(0.5);
-  doc.line(x - 40, y, x + 40, y);
+  doc.line(x - 40, y + 5, x + 40, y + 5);
   
   // Text below signature
   doc.setTextColor(100, 100, 100);
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
-  doc.text('Signature autorisée', x, y + 8, { align: 'center' });
+  doc.text('Signature autorisée', x, y + 13, { align: 'center' });
   
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...textColor);
-  doc.text('Direction Legal Form', x, y + 15, { align: 'center' });
+  doc.text('S. KONAN - Direction Legal Form', x, y + 20, { align: 'center' });
 };
 
-export const generatePaymentReceiptPDF = (data: ReceiptData): jsPDF => {
+export const generatePaymentReceiptPDF = async (data: ReceiptData): Promise<jsPDF> => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -279,9 +302,9 @@ export const generatePaymentReceiptPDF = (data: ReceiptData): jsPDF => {
   
   y += 50;
   
-  // Stamp and signature section
-  drawOfficialStamp(doc, 55, y + 25, 28);
-  drawSignature(doc, pageWidth - 55, y + 25);
+  // Stamp and signature section - with real images
+  await drawOfficialStamp(doc, 55, y + 25, 28);
+  await drawSignature(doc, pageWidth - 55, y + 25);
   
   // Footer
   y = pageHeight - 20;
@@ -292,12 +315,12 @@ export const generatePaymentReceiptPDF = (data: ReceiptData): jsPDF => {
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.text('Ce reçu confirme le paiement intégral des services mentionnés.', pageWidth / 2, y, { align: 'center' });
-  doc.text('Pour toute question: contact@legalform.ci | +225 07 09 67 79 25 | www.legalform.ci', pageWidth / 2, y + 6, { align: 'center' });
+  doc.text('Pour toute question: monentreprise@legalform.ci | +225 07 09 67 79 25 | www.legalform.ci', pageWidth / 2, y + 6, { align: 'center' });
   
   return doc;
 };
 
-export const generateInvoicePDF = (data: InvoiceData): jsPDF => {
+export const generateInvoicePDF = async (data: InvoiceData): Promise<jsPDF> => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -453,10 +476,10 @@ export const generateInvoicePDF = (data: InvoiceData): jsPDF => {
     y += 35;
   }
   
-  // Stamp and signature
+  // Stamp and signature - with real images
   if (y < pageHeight - 80) {
-    drawOfficialStamp(doc, 55, y + 25, 28);
-    drawSignature(doc, pageWidth - 55, y + 25);
+    await drawOfficialStamp(doc, 55, y + 25, 28);
+    await drawSignature(doc, pageWidth - 55, y + 25);
   }
   
   // Footer
@@ -473,32 +496,32 @@ export const generateInvoicePDF = (data: InvoiceData): jsPDF => {
   return doc;
 };
 
-export const downloadReceiptPDF = (data: ReceiptData): void => {
-  const doc = generatePaymentReceiptPDF(data);
+export const downloadReceiptPDF = async (data: ReceiptData): Promise<void> => {
+  const doc = await generatePaymentReceiptPDF(data);
   doc.save(`Recu-${data.receiptNumber}.pdf`);
 };
 
-export const downloadInvoicePDF = (data: InvoiceData): void => {
-  const doc = generateInvoicePDF(data);
+export const downloadInvoicePDF = async (data: InvoiceData): Promise<void> => {
+  const doc = await generateInvoicePDF(data);
   doc.save(`Facture-${data.invoiceNumber}.pdf`);
 };
 
 export const getReceiptPDFBlob = async (data: ReceiptData): Promise<Blob> => {
-  const doc = generatePaymentReceiptPDF(data);
+  const doc = await generatePaymentReceiptPDF(data);
   return doc.output('blob');
 };
 
-export const getReceiptPDFBase64 = (data: ReceiptData): string => {
-  const doc = generatePaymentReceiptPDF(data);
+export const getReceiptPDFBase64 = async (data: ReceiptData): Promise<string> => {
+  const doc = await generatePaymentReceiptPDF(data);
   return doc.output('datauristring');
 };
 
 export const getInvoicePDFBlob = async (data: InvoiceData): Promise<Blob> => {
-  const doc = generateInvoicePDF(data);
+  const doc = await generateInvoicePDF(data);
   return doc.output('blob');
 };
 
-export const getInvoicePDFBase64 = (data: InvoiceData): string => {
-  const doc = generateInvoicePDF(data);
+export const getInvoicePDFBase64 = async (data: InvoiceData): Promise<string> => {
+  const doc = await generateInvoicePDF(data);
   return doc.output('datauristring');
 };

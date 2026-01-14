@@ -6,11 +6,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import DashboardWelcome from "@/components/DashboardWelcome";
-import { LogOut, Plus, FileText, Building2, Clock, CreditCard, MessageSquare, Eye, TrendingUp, CheckCircle2, Bell } from "lucide-react";
+import ReferralSection from "@/components/ReferralSection";
+import { LogOut, Plus, FileText, Building2, Clock, CreditCard, MessageSquare, Eye, TrendingUp, CheckCircle2, Gift } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useClientRealtimeNotifications } from "@/hooks/useClientRealtimeNotifications";
 
@@ -46,7 +48,6 @@ const ClientDashboard = () => {
     }
   }, [user, userRole, loading, navigate]);
 
-  // Wrap fetchRequests in useCallback for stable reference
   const fetchRequests = useCallback(async () => {
     if (!user) return;
     
@@ -88,7 +89,6 @@ const ClientDashboard = () => {
     }
   }, [user, toast, t]);
 
-  // Enable real-time notifications
   useClientRealtimeNotifications({
     userId: user?.id,
     onUpdate: fetchRequests
@@ -106,7 +106,6 @@ const ClientDashboard = () => {
       case 'in_progress': return 'bg-blue-500';
       case 'completed': return 'bg-green-500';
       case 'rejected': return 'bg-red-500';
-      case 'pending_quote': return 'bg-purple-500';
       default: return 'bg-gray-500';
     }
   };
@@ -117,7 +116,6 @@ const ClientDashboard = () => {
       case 'in_progress': return t('status.inProgress', 'En cours');
       case 'completed': return t('status.completed', 'Terminé');
       case 'rejected': return t('status.rejected', 'Rejeté');
-      case 'pending_quote': return t('status.pendingQuote', 'Devis en attente');
       default: return status;
     }
   };
@@ -159,7 +157,6 @@ const ClientDashboard = () => {
       
       <main className="pt-32 pb-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
-          {/* Welcome Banner */}
           {user && <DashboardWelcome userId={user.id} />}
           
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-8 mb-8">
@@ -183,20 +180,20 @@ const ClientDashboard = () => {
             </div>
           </div>
 
-          {/* Enhanced Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <Card className="border-2 hover:shadow-lg transition-shadow">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <Card className="border-2">
               <CardContent className="p-4 flex items-center gap-4">
                 <div className="p-3 rounded-lg bg-primary/10">
                   <FileText className="h-6 w-6 text-primary" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-foreground">{requests.length}</p>
-                  <p className="text-sm text-muted-foreground">{t('dashboard.totalRequests', 'Demandes totales')}</p>
+                  <p className="text-sm text-muted-foreground">Demandes</p>
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-2 hover:shadow-lg transition-shadow">
+            <Card className="border-2">
               <CardContent className="p-4 flex items-center gap-4">
                 <div className="p-3 rounded-lg bg-yellow-500/10">
                   <Clock className="h-6 w-6 text-yellow-500" />
@@ -205,11 +202,11 @@ const ClientDashboard = () => {
                   <p className="text-2xl font-bold text-foreground">
                     {requests.filter(r => r.status === 'pending' || r.status === 'in_progress').length}
                   </p>
-                  <p className="text-sm text-muted-foreground">{t('dashboard.inProgress', 'En cours')}</p>
+                  <p className="text-sm text-muted-foreground">En cours</p>
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-2 hover:shadow-lg transition-shadow">
+            <Card className="border-2">
               <CardContent className="p-4 flex items-center gap-4">
                 <div className="p-3 rounded-lg bg-green-500/10">
                   <CheckCircle2 className="h-6 w-6 text-green-500" />
@@ -218,167 +215,112 @@ const ClientDashboard = () => {
                   <p className="text-2xl font-bold text-foreground">
                     {requests.filter(r => r.status === 'completed').length}
                   </p>
-                  <p className="text-sm text-muted-foreground">{t('dashboard.completed', 'Terminées')}</p>
+                  <p className="text-sm text-muted-foreground">Terminées</p>
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-2 hover:shadow-lg transition-shadow">
+            <Card className="border-2">
               <CardContent className="p-4 flex items-center gap-4">
                 <div className="p-3 rounded-lg bg-primary/10">
                   <TrendingUp className="h-6 w-6 text-primary" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-foreground">{totalPaid.toLocaleString()}</p>
-                  <p className="text-sm text-muted-foreground">FCFA {t('status.paid', 'Payé')}</p>
+                  <p className="text-sm text-muted-foreground">FCFA payé</p>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Pending Payment Alert */}
-          {totalPending > 0 && (
-            <Card className="border-2 border-yellow-500/50 bg-yellow-500/5 mb-6">
-              <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <CreditCard className="h-6 w-6 text-yellow-500" />
-                  <div>
-                    <p className="font-semibold text-foreground">
-                      {t('dashboard.pendingPayment', 'Paiements en attente')}
+          {/* Tabs */}
+          <Tabs defaultValue="requests" className="w-full">
+            <TabsList className="grid w-full max-w-md grid-cols-2">
+              <TabsTrigger value="requests" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Mes demandes
+              </TabsTrigger>
+              <TabsTrigger value="referral" className="flex items-center gap-2">
+                <Gift className="h-4 w-4" />
+                Parrainage
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="requests" className="mt-6">
+              {requests.length === 0 ? (
+                <Card className="border-2">
+                  <CardContent className="pt-6 text-center py-12">
+                    <Building2 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground mb-4 text-lg">
+                      {t('dashboard.noRequests', 'Vous n\'avez pas encore de demande')}
                     </p>
-                    <p className="text-sm text-muted-foreground">
-                      {t('dashboard.pendingPaymentDesc', 'Vous avez des factures à régler')}: <span className="font-bold text-yellow-600">{totalPending.toLocaleString()} FCFA</span>
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {requests.length === 0 ? (
-            <Card className="border-2">
-              <CardContent className="pt-6 text-center py-12">
-                <Building2 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground mb-4 text-lg">
-                  {t('dashboard.noRequests', 'Vous n\'avez pas encore de demande en cours')}
-                </p>
-                <Button onClick={() => navigate("/create")} size="lg">
-                  {t('dashboard.createFirst', 'Créer ma première entreprise')}
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4">
-              {requests.map((request) => (
-                <Card 
-                  key={request.id} 
-                  className="border-2 hover:border-primary hover:shadow-lg transition-all cursor-pointer" 
-                  onClick={() => navigate(`/request/${request.id}?type=${request.type}`)}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <CardTitle className="text-lg">
-                            {request.type === 'company' 
-                              ? (request.company_name || t('dashboard.companyCreation', 'Création d\'entreprise')) 
-                              : `Service ${request.service_type}`
-                            }
-                          </CardTitle>
-                          {getPaymentStatusBadge(request.payment_status)}
-                        </div>
-                        <CardDescription className="flex flex-wrap gap-2 items-center">
-                          <span>{t('dashboard.trackingNumber', 'N° de suivi')}:</span>
-                          <span className="font-semibold text-foreground bg-muted px-2 py-0.5 rounded">
-                            {request.tracking_number || request.id.slice(0, 8).toUpperCase()}
-                          </span>
-                        </CardDescription>
-                      </div>
-                      <Badge className={`${getStatusColor(request.status)} text-white`}>
-                        {getStatusLabel(request.status)}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    {/* Progress Bar */}
-                    <div className="mb-4">
-                      <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                        <span>{t('dashboard.progress', 'Progression')}</span>
-                        <span>{getStatusProgress(request.status)}%</span>
-                      </div>
-                      <Progress value={getStatusProgress(request.status)} className="h-2" />
-                    </div>
-                    
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                      <div>
-                        <p className="text-xs text-muted-foreground uppercase tracking-wide">{t('dashboard.type', 'Type')}</p>
-                        <p className="font-medium text-sm">
-                          {request.type === 'company' 
-                            ? request.structure_type?.toUpperCase() 
-                            : request.service_type
-                          }
-                        </p>
-                      </div>
-                      {request.region && (
-                        <div>
-                          <p className="text-xs text-muted-foreground uppercase tracking-wide">{t('dashboard.region', 'Région')}</p>
-                          <p className="font-medium text-sm">{request.region}</p>
-                        </div>
-                      )}
-                      <div>
-                        <p className="text-xs text-muted-foreground uppercase tracking-wide">{t('dashboard.date', 'Date')}</p>
-                        <p className="font-medium text-sm">
-                          {new Date(request.created_at).toLocaleDateString('fr-FR')}
-                        </p>
-                      </div>
-                      {request.estimated_price && (
-                        <div>
-                          <p className="text-xs text-muted-foreground uppercase tracking-wide">{t('dashboard.price', 'Tarif')}</p>
-                          <p className="font-medium text-sm text-primary">{request.estimated_price?.toLocaleString()} FCFA</p>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      {/* Payment button for unpaid requests */}
-                      {(!request.payment_status || request.payment_status === 'pending') && request.estimated_price && (
-                        <Button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/payment/${request.id}?type=${request.type}`);
-                          }}
-                          className="w-full sm:w-auto bg-accent hover:bg-accent/90"
-                        >
-                          <CreditCard className="mr-2 h-4 w-4" />
-                          {t('tracking.payNow', 'Payer maintenant')}
-                        </Button>
-                      )}
-                      <Button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/request/${request.id}?type=${request.type}`);
-                        }}
-                        className="w-full sm:w-auto"
-                        variant="outline"
-                      >
-                        <Eye className="mr-2 h-4 w-4" />
-                        {t('dashboard.viewDetails', 'Voir les détails')}
-                      </Button>
-                      <Button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/request/${request.id}?type=${request.type}#messages`);
-                        }}
-                        className="w-full sm:w-auto"
-                        variant="ghost"
-                      >
-                        <MessageSquare className="mr-2 h-4 w-4" />
-                        {t('dashboard.messaging', 'Messagerie')}
-                      </Button>
-                    </div>
+                    <Button onClick={() => navigate("/create")} size="lg">
+                      {t('dashboard.createFirst', 'Créer ma première entreprise')}
+                    </Button>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
-          )}
+              ) : (
+                <div className="grid gap-4">
+                  {requests.map((request) => (
+                    <Card 
+                      key={request.id} 
+                      className="border-2 hover:border-primary hover:shadow-lg transition-all cursor-pointer" 
+                      onClick={() => navigate(`/request/${request.id}?type=${request.type}`)}
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <CardTitle className="text-lg">
+                                {request.type === 'company' 
+                                  ? (request.company_name || 'Création d\'entreprise') 
+                                  : `Service ${request.service_type}`}
+                              </CardTitle>
+                              {getPaymentStatusBadge(request.payment_status)}
+                            </div>
+                            <CardDescription>
+                              N° de suivi: <span className="font-semibold">{request.tracking_number || request.id.slice(0, 8).toUpperCase()}</span>
+                            </CardDescription>
+                          </div>
+                          <Badge className={`${getStatusColor(request.status)} text-white`}>
+                            {getStatusLabel(request.status)}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="mb-4">
+                          <Progress value={getStatusProgress(request.status)} className="h-2" />
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {(!request.payment_status || request.payment_status === 'pending') && request.estimated_price && (
+                            <Button 
+                              onClick={(e) => { e.stopPropagation(); navigate(`/payment/${request.id}?type=${request.type}`); }}
+                              className="bg-accent hover:bg-accent/90"
+                              size="sm"
+                            >
+                              <CreditCard className="mr-2 h-4 w-4" />
+                              Payer
+                            </Button>
+                          )}
+                          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate(`/request/${request.id}?type=${request.type}`); }}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            Détails
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); navigate(`/request/${request.id}?type=${request.type}#messages`); }}>
+                            <MessageSquare className="mr-2 h-4 w-4" />
+                            Messages
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="referral" className="mt-6">
+              {user && <ReferralSection userId={user.id} />}
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
 
