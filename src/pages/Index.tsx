@@ -304,17 +304,26 @@ const Index = () => {
             {testimonials.map((testimonial, index) => (
               <Card key={index} className="border-2 hover:shadow-lg transition-shadow">
                 <CardContent className="p-6">
-                  <div className="flex items-center mb-3">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="h-5 w-5 text-accent fill-current" />
-                    ))}
-                  </div>
-                  <p className="text-muted-foreground mb-4 italic">"{testimonial.comment}"</p>
-                  <div className="flex items-center justify-between pt-4 border-t border-border">
-                    <div>
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-14 h-14 rounded-full overflow-hidden bg-muted flex items-center justify-center border-2 border-primary/20">
+                      {testimonial.logo ? (
+                        <img src={testimonial.logo} alt={testimonial.company} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-xl font-bold text-primary">{testimonial.name.charAt(0)}</span>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center mb-1">
+                        {[...Array(testimonial.rating)].map((_, i) => (
+                          <Star key={i} className="h-4 w-4 text-accent fill-current" />
+                        ))}
+                      </div>
                       <p className="font-semibold text-foreground">{testimonial.name}</p>
                       <p className="text-sm text-primary font-medium">{testimonial.company}</p>
                     </div>
+                  </div>
+                  <p className="text-muted-foreground mb-4 italic">"{testimonial.comment}"</p>
+                  <div className="flex items-center justify-end pt-4 border-t border-border">
                     <span className="text-sm text-muted-foreground">{testimonial.region}</span>
                   </div>
                 </CardContent>
