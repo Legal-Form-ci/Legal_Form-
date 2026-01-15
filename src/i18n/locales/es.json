@@ -14,7 +14,10 @@
     "showcase": "Empresas Creadas",
     "testimonials": "Testimonios",
     "mySpace": "Mi Espacio",
-    "createCompany": "Crear mi empresa"
+    "createCompany": "Crear",
+    "faq": "Preguntas frecuentes",
+    "news": "Noticias",
+    "tracking": "Seguir mi expediente"
   },
   "hero": {
     "title": "Crea tu empresa en Costa de Marfil",
@@ -79,6 +82,10 @@
       "koffi": "Servicio rápido y profesional. El equipo de Legal Form estuvo disponible en cada paso.",
       "kouassi": "Creé mi empresa en poco tiempo.",
       "diallo": "Proceso simplificado, equipo competente. Recomiendo altamente Legal Form."
+    },
+    "referral": {
+      "title": "Programa de Referidos",
+      "desc": "Gana 10.000 FCFA refiriendo a un amigo. ¡Tu referido también obtiene -10.000 FCFA!"
     }
   },
   "create": {
@@ -143,8 +150,8 @@
     "otherServices": "Otros trámites",
     "estimatedPrice": "Precio estimado",
     "onQuote": "Con presupuesto",
-    "priceAbidjan": "Precio de creación en Abiyán: 180.000 FCFA",
-    "priceInterior": "Precio de creación en interior: desde 150.000 FCFA",
+    "priceAbidjan": "Precio de creación en Abiyán: 199.000 FCFA",
+    "priceInterior": "Precio de creación en interior: desde 169.000 FCFA",
     "requiredFields": "Campos obligatorios",
     "processing": "Procesando...",
     "submitRequest": "Enviar solicitud",
@@ -152,7 +159,9 @@
     "requestSent": "Solicitud enviada",
     "quoteMessage": "Tu solicitud será revisada y te enviaremos un presupuesto.",
     "success": "Solicitud registrada",
-    "redirectPayment": "Redirigiendo a la página de pago..."
+    "redirectPayment": "Redirigiendo a la página de pago...",
+    "sharesCount": "Número de acciones",
+    "sharesPercentage": "Porcentaje de acciones"
   },
   "services": {
     "title": "Nuestros Servicios",
@@ -168,7 +177,32 @@
     "dfeDesc": "Declaración Fiscal de Existencia",
     "nccDesc": "Número de Cuenta de Contribuyente",
     "startNow": "Comenzar ahora",
-    "learnMore": "Saber más"
+    "learnMore": "Saber más",
+    "companyCreation": "Creación de empresa",
+    "otherStructures": "Otras Estructuras",
+    "legalDocuments": "Documentos Legales",
+    "complementaryServices": "Servicios Complementarios",
+    "additionalServices": "Servicios Adicionales",
+    "pricing": "Precios de Creación de Empresa",
+    "priceAbidjan": "199.000 FCFA",
+    "priceInterior": "Desde 169.000 FCFA",
+    "priceIncludes": "Este precio incluye",
+    "startProject": "Iniciar mi proyecto",
+    "paymentAccepted": "Pago en línea aceptado: Mobile Money, tarjeta de crédito y transferencia electrónica",
+    "onQuote": "Con presupuesto",
+    "submitRequest": "Enviar mi solicitud",
+    "structuration": "Estructuración de Proyectos",
+    "structurationDesc": "Desarrollo de plan de negocios, estudios de factibilidad y asesoría estratégica",
+    "formation": "Formación",
+    "formationDesc": "Formación empresarial, gestión de negocios y apoyo personalizado",
+    "financement": "Movilización de Financiamiento",
+    "financementDesc": "Investigación, preparación de expedientes y movilización de financiamiento",
+    "digitale": "Soluciones Digitales",
+    "digitaleDesc": "Diseño de sitios web, aplicaciones móviles y soluciones digitales personalizadas",
+    "identite": "Identidad Visual",
+    "identiteDesc": "Diseño de logos, cartas gráficas y materiales de comunicación",
+    "comptabilite": "Contabilidad y Fiscalidad",
+    "comptabiliteDesc": "Seguimiento contable, declaraciones fiscales y asesoría en gestión financiera"
   },
   "footer": {
     "about": "Acerca de Legal Form",
@@ -221,7 +255,21 @@
     "cancel": "Cancelar",
     "status": "Estado",
     "date": "Fecha",
-    "amount": "Monto"
+    "amount": "Monto",
+    "yes": "Sí",
+    "no": "No",
+    "or": "o",
+    "and": "y",
+    "from": "De",
+    "to": "A",
+    "total": "Total",
+    "details": "Detalles",
+    "description": "Descripción",
+    "copy": "Copiar",
+    "copied": "¡Copiado!",
+    "share": "Compartir",
+    "refresh": "Actualizar",
+    "reset": "Restablecer"
   },
   "dashboard": {
     "welcome": "Bienvenido",
@@ -251,7 +299,15 @@
     "price": "Precio",
     "viewDetails": "Ver detalles y mensajería",
     "error": "Error",
-    "errorLoading": "No se pueden cargar tus solicitudes"
+    "errorLoading": "No se pueden cargar tus solicitudes",
+    "myRequests": "Mis solicitudes",
+    "myCompanies": "Mis empresas",
+    "myServices": "Mis servicios",
+    "referral": "Referidos",
+    "statistics": "Estadísticas",
+    "payNow": "Pagar ahora",
+    "pendingPaymentAlert": "Alerta de pago pendiente",
+    "invoiceGenerated": "Factura generada"
   },
   "contact": {
     "title": "Contáctanos",
@@ -314,7 +370,11 @@
     "resetPassword": "Restablecer contraseña",
     "resetPasswordDesc": "Ingresa tu email para recibir un enlace de restablecimiento",
     "sendResetLink": "Enviar enlace",
-    "backToLogin": "Volver a iniciar sesión"
+    "backToLogin": "Volver a iniciar sesión",
+    "newPassword": "Nueva contraseña",
+    "confirmNewPassword": "Confirmar nueva contraseña",
+    "passwordChanged": "Contraseña cambiada exitosamente",
+    "passwordChangedDesc": "Serás redirigido a la página de inicio de sesión"
   },
   "testimonials": {
     "title": "Testimonios",
@@ -330,7 +390,9 @@
     "submitTestimonial": "Enviar testimonio",
     "thankYou": "¡Gracias por tu testimonio!",
     "joinClients": "Únete a nuestros clientes satisfechos",
-    "trustUs": "Confía en nosotros para crear tu empresa"
+    "trustUs": "Confía en nosotros para crear tu empresa",
+    "noTestimonials": "Aún no hay testimonios",
+    "beFirst": "¡Sé el primero en compartir tu experiencia!"
   },
   "regions": {
     "title": "Nuestras Regiones",
@@ -338,7 +400,9 @@
     "mainOffice": "Oficina Principal - Grand-Bassam",
     "coverage": "Cubrimos toda Costa de Marfil desde nuestra oficina en Abiyán",
     "selectRegion": "Selecciona una región",
-    "allRegions": "Todas las regiones"
+    "allRegions": "Todas las regiones",
+    "notListed": "¿Tu región no está listada?",
+    "contactUs": "¡Contáctanos y encontraremos una solución para ti!"
   },
   "pricing": {
     "title": "Nuestros Precios",
@@ -350,7 +414,12 @@
     "popular": "Popular",
     "startFrom": "Desde",
     "perCompany": "por empresa",
-    "getStarted": "Comenzar"
+    "getStarted": "Comenzar",
+    "packAbidjan": "Pack Creación Abiyán",
+    "packInterior": "Pack Creación Interior",
+    "recommended": "Recomendado",
+    "additionalServices": "Servicios Adicionales",
+    "requestQuote": "Solicitar presupuesto"
   },
   "notFound": {
     "title": "Página no encontrada",
@@ -371,7 +440,17 @@
     "amount": "Monto",
     "reference": "Referencia",
     "method": "Método de pago",
-    "status": "Estado"
+    "status": "Estado",
+    "verifying": "Verificando...",
+    "verifyingDesc": "Estamos verificando tu pago con nuestro sistema.",
+    "successTitle": "¡Pago exitoso!",
+    "failedTitle": "Pago fallido",
+    "pendingTitle": "Pago pendiente",
+    "transactionRef": "Referencia de transacción",
+    "trackingNumber": "Número de seguimiento",
+    "goToDashboard": "Ir a mi panel de control",
+    "retry": "Reintentar pago",
+    "backHome": "Volver al inicio"
   },
   "status": {
     "pending": "Pendiente",
@@ -380,9 +459,12 @@
     "rejected": "Rechazado",
     "pendingQuote": "Presupuesto pendiente",
     "paid": "Pagado",
-    "unpaid": "No pagado"
+    "unpaid": "No pagado",
+    "processing": "Procesando",
+    "confirmed": "Confirmado",
+    "cancelled": "Cancelado"
   },
-"admin": {
+  "admin": {
     "dashboard": "Panel de control",
     "companies": "Empresas",
     "services": "Servicios",
@@ -448,7 +530,12 @@
     "amount": "Monto",
     "status": "Estado",
     "date": "Fecha",
-    "actions": "Acciones"
+    "actions": "Acciones",
+    "news": "Noticias",
+    "database": "Base de datos",
+    "referralWithdrawals": "Retiros de Referidos",
+    "identityDocuments": "Documentos de Identidad",
+    "additionalServices": "Servicios Adicionales"
   },
   "about": {
     "title": "Acerca de Legal Form",
@@ -465,7 +552,9 @@
     "reason1": "Experiencia legal reconocida",
     "reason2": "Apoyo personalizado",
     "reason3": "Plazos optimizados",
-    "reason4": "Precios transparentes"
+    "reason4": "Precios transparentes",
+    "startProject": "Iniciar mi proyecto",
+    "contactTeam": "Contactar a nuestro equipo"
   },
   "blog": {
     "title": "Blog",
@@ -473,14 +562,20 @@
     "readMore": "Leer más",
     "categories": "Categorías",
     "recentPosts": "Publicaciones recientes",
-    "noPosts": "No hay publicaciones disponibles"
+    "noPosts": "No hay publicaciones disponibles",
+    "views": "vistas",
+    "publishedOn": "Publicado el",
+    "author": "Autor",
+    "tags": "Etiquetas"
   },
   "ebooks": {
     "title": "E-books",
     "subtitle": "Recursos gratuitos para emprendedores",
     "download": "Descargar",
     "free": "Gratis",
-    "noEbooks": "No hay e-books disponibles"
+    "noEbooks": "No hay e-books disponibles",
+    "downloads": "descargas",
+    "discoverResources": "Descubre nuestros recursos"
   },
   "tracking": {
     "title": "Seguimiento de expediente",
@@ -517,7 +612,14 @@
     "showAll": "Mostrar todas las preguntas",
     "stillQuestions": "¿Todavía tienes preguntas?",
     "stillQuestionsDesc": "Nuestro equipo está disponible para responder todas tus preguntas.",
-    "contactUs": "Contáctanos"
+    "contactUs": "Contáctanos",
+    "categories": {
+      "companyCreation": "Creación de empresa",
+      "payment": "Pago y Precios",
+      "process": "Proceso y Seguimiento",
+      "documents": "Documentos y Entregables",
+      "services": "Servicios Adicionales"
+    }
   },
   "notifications": {
     "paymentApproved": "¡Pago confirmado!",
@@ -583,6 +685,51 @@
     "pending": "Pendiente",
     "codePlaceholder": "Código de referido (opcional)",
     "referrerName": "Nombre del referente",
-    "discountApplied": "Descuento de referido aplicado: -10.000 FCFA"
+    "discountApplied": "Descuento de referido aplicado: -10.000 FCFA",
+    "noReferrals": "Aún no hay referidos",
+    "noReferralsDesc": "Comparte tu enlace para comenzar a ganar",
+    "withdrawalRequested": "Retiro solicitado",
+    "withdrawalRequestedDesc": "Tu solicitud de retiro ha sido enviada.",
+    "withdrawalHistory": "Historial de retiros",
+    "noWithdrawals": "Aún no hay retiros",
+    "minWithdrawal": "Retiro mínimo: 10.000 FCFA",
+    "paymentMethod": "Método de pago",
+    "mobileMoneyNumber": "Número de Mobile Money",
+    "amount": "Monto",
+    "requestedAt": "Solicitado el",
+    "processedAt": "Procesado el",
+    "adminNotes": "Notas del administrador"
+  },
+  "news": {
+    "title": "Noticias",
+    "subtitle": "Mantente informado sobre nuestras últimas actualizaciones",
+    "latestNews": "Últimas noticias",
+    "allNews": "Todas las noticias",
+    "noNews": "No hay noticias disponibles",
+    "readMore": "Leer más",
+    "publishedOn": "Publicado el",
+    "views": "vistas"
+  },
+  "welcome": {
+    "title": "Bienvenido a Legal Form",
+    "subtitle": "Tu socio para la creación de empresas en Costa de Marfil",
+    "feature1": {
+      "title": "Servicio Rápido",
+      "desc": "Crea tu empresa en pocos días"
+    },
+    "feature2": {
+      "title": "Apoyo Experto",
+      "desc": "Nuestro equipo te guía en cada paso"
+    },
+    "feature3": {
+      "title": "Precios Competitivos",
+      "desc": "Precios transparentes y accesibles"
+    },
+    "feature4": {
+      "title": "Cobertura Completa",
+      "desc": "Operamos en toda Costa de Marfil"
+    },
+    "startNow": "Comenzar ahora",
+    "exploreMore": "Explorar más"
   }
 }

@@ -14,7 +14,10 @@
     "showcase": "Companies Created",
     "testimonials": "Testimonials",
     "mySpace": "My Space",
-    "createCompany": "Create my company"
+    "createCompany": "Create",
+    "faq": "FAQ",
+    "news": "News",
+    "tracking": "Track my file"
   },
   "hero": {
     "title": "Create your company in Ivory Coast",
@@ -79,6 +82,10 @@
       "koffi": "Fast and professional service. The Legal Form team was available at every step.",
       "kouassi": "I created my company in a short time.",
       "diallo": "Simplified process, competent team. I highly recommend Legal Form."
+    },
+    "referral": {
+      "title": "Referral Program",
+      "desc": "Earn 10,000 FCFA by referring a friend. Your referral also gets -10,000 FCFA!"
     }
   },
   "create": {
@@ -143,8 +150,8 @@
     "otherServices": "Other procedures",
     "estimatedPrice": "Estimated price",
     "onQuote": "On quote",
-    "priceAbidjan": "Creation price in Abidjan: 180,000 FCFA",
-    "priceInterior": "Creation price in interior: from 150,000 FCFA",
+    "priceAbidjan": "Creation price in Abidjan: 199,000 FCFA",
+    "priceInterior": "Creation price in interior: from 169,000 FCFA",
     "requiredFields": "Required fields",
     "processing": "Processing...",
     "submitRequest": "Submit request",
@@ -152,7 +159,9 @@
     "requestSent": "Request sent",
     "quoteMessage": "Your request will be reviewed and a quote will be sent to you.",
     "success": "Request registered",
-    "redirectPayment": "Redirecting to payment page..."
+    "redirectPayment": "Redirecting to payment page...",
+    "sharesCount": "Number of shares",
+    "sharesPercentage": "Percentage of shares"
   },
   "services": {
     "title": "Our Services",
@@ -168,7 +177,32 @@
     "dfeDesc": "Tax Declaration of Existence",
     "nccDesc": "Taxpayer Account Number",
     "startNow": "Start now",
-    "learnMore": "Learn more"
+    "learnMore": "Learn more",
+    "companyCreation": "Company Creation",
+    "otherStructures": "Other Structures",
+    "legalDocuments": "Legal Documents",
+    "complementaryServices": "Complementary Services",
+    "additionalServices": "Additional Services",
+    "pricing": "Company Creation Pricing",
+    "priceAbidjan": "199,000 FCFA",
+    "priceInterior": "From 169,000 FCFA",
+    "priceIncludes": "This price includes",
+    "startProject": "Start my project",
+    "paymentAccepted": "Online payment accepted: Mobile Money, credit card and electronic transfer",
+    "onQuote": "On quote",
+    "submitRequest": "Submit my request",
+    "structuration": "Project Structuring",
+    "structurationDesc": "Business plan development, feasibility studies and strategic advice",
+    "formation": "Training",
+    "formationDesc": "Entrepreneurial training, business management and personalized support",
+    "financement": "Funding Mobilization",
+    "financementDesc": "Research, file preparation and funding mobilization",
+    "digitale": "Digital Solutions",
+    "digitaleDesc": "Website design, mobile applications and custom digital solutions",
+    "identite": "Visual Identity",
+    "identiteDesc": "Logo design, graphic charters and communication materials",
+    "comptabilite": "Accounting & Taxation",
+    "comptabiliteDesc": "Accounting follow-up, tax declarations and financial management advice"
   },
   "footer": {
     "about": "About Legal Form",
@@ -221,7 +255,21 @@
     "cancel": "Cancel",
     "status": "Status",
     "date": "Date",
-    "amount": "Amount"
+    "amount": "Amount",
+    "yes": "Yes",
+    "no": "No",
+    "or": "or",
+    "and": "and",
+    "from": "From",
+    "to": "To",
+    "total": "Total",
+    "details": "Details",
+    "description": "Description",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "share": "Share",
+    "refresh": "Refresh",
+    "reset": "Reset"
   },
   "dashboard": {
     "welcome": "Welcome",
@@ -251,7 +299,15 @@
     "price": "Price",
     "viewDetails": "View details and messaging",
     "error": "Error",
-    "errorLoading": "Unable to load your requests"
+    "errorLoading": "Unable to load your requests",
+    "myRequests": "My requests",
+    "myCompanies": "My companies",
+    "myServices": "My services",
+    "referral": "Referral",
+    "statistics": "Statistics",
+    "payNow": "Pay now",
+    "pendingPaymentAlert": "Pending payment alert",
+    "invoiceGenerated": "Invoice generated"
   },
   "contact": {
     "title": "Contact Us",
@@ -314,7 +370,11 @@
     "resetPassword": "Reset password",
     "resetPasswordDesc": "Enter your email to receive a reset link",
     "sendResetLink": "Send reset link",
-    "backToLogin": "Back to login"
+    "backToLogin": "Back to login",
+    "newPassword": "New password",
+    "confirmNewPassword": "Confirm new password",
+    "passwordChanged": "Password changed successfully",
+    "passwordChangedDesc": "You will be redirected to the login page"
   },
   "testimonials": {
     "title": "Testimonials",
@@ -330,7 +390,9 @@
     "submitTestimonial": "Submit testimonial",
     "thankYou": "Thank you for your testimonial!",
     "joinClients": "Join our satisfied clients",
-    "trustUs": "Trust us to create your company"
+    "trustUs": "Trust us to create your company",
+    "noTestimonials": "No testimonials yet",
+    "beFirst": "Be the first to share your experience!"
   },
   "regions": {
     "title": "Our Regions",
@@ -338,7 +400,9 @@
     "mainOffice": "Main Office - Grand-Bassam",
     "coverage": "We cover all of Ivory Coast from our office in Abidjan",
     "selectRegion": "Select a region",
-    "allRegions": "All regions"
+    "allRegions": "All regions",
+    "notListed": "Your region is not listed?",
+    "contactUs": "Contact us and we will find a solution for you!"
   },
   "pricing": {
     "title": "Our Pricing",
@@ -350,7 +414,12 @@
     "popular": "Popular",
     "startFrom": "Starting from",
     "perCompany": "per company",
-    "getStarted": "Get started"
+    "getStarted": "Get started",
+    "packAbidjan": "Abidjan Creation Pack",
+    "packInterior": "Interior Creation Pack",
+    "recommended": "Recommended",
+    "additionalServices": "Additional Services",
+    "requestQuote": "Request a quote"
   },
   "notFound": {
     "title": "Page not found",
@@ -371,7 +440,17 @@
     "amount": "Amount",
     "reference": "Reference",
     "method": "Payment method",
-    "status": "Status"
+    "status": "Status",
+    "verifying": "Verifying...",
+    "verifyingDesc": "We are verifying your payment with our system.",
+    "successTitle": "Payment successful!",
+    "failedTitle": "Payment failed",
+    "pendingTitle": "Payment pending",
+    "transactionRef": "Transaction reference",
+    "trackingNumber": "Tracking number",
+    "goToDashboard": "Go to my dashboard",
+    "retry": "Retry payment",
+    "backHome": "Back to home"
   },
   "status": {
     "pending": "Pending",
@@ -380,9 +459,12 @@
     "rejected": "Rejected",
     "pendingQuote": "Quote pending",
     "paid": "Paid",
-    "unpaid": "Unpaid"
+    "unpaid": "Unpaid",
+    "processing": "Processing",
+    "confirmed": "Confirmed",
+    "cancelled": "Cancelled"
   },
-"admin": {
+  "admin": {
     "dashboard": "Dashboard",
     "companies": "Companies",
     "services": "Services",
@@ -448,7 +530,12 @@
     "amount": "Amount",
     "status": "Status",
     "date": "Date",
-    "actions": "Actions"
+    "actions": "Actions",
+    "news": "News",
+    "database": "Database",
+    "referralWithdrawals": "Referral Withdrawals",
+    "identityDocuments": "Identity Documents",
+    "additionalServices": "Additional Services"
   },
   "about": {
     "title": "About Legal Form",
@@ -465,7 +552,9 @@
     "reason1": "Recognized legal expertise",
     "reason2": "Personalized support",
     "reason3": "Optimized deadlines",
-    "reason4": "Transparent pricing"
+    "reason4": "Transparent pricing",
+    "startProject": "Start my project",
+    "contactTeam": "Contact our team"
   },
   "blog": {
     "title": "Blog",
@@ -473,16 +562,22 @@
     "readMore": "Read more",
     "categories": "Categories",
     "recentPosts": "Recent posts",
-    "noPosts": "No posts available"
+    "noPosts": "No posts available",
+    "views": "views",
+    "publishedOn": "Published on",
+    "author": "Author",
+    "tags": "Tags"
   },
   "ebooks": {
     "title": "E-books",
     "subtitle": "Free resources for entrepreneurs",
     "download": "Download",
     "free": "Free",
-    "noEbooks": "No e-books available"
+    "noEbooks": "No e-books available",
+    "downloads": "downloads",
+    "discoverResources": "Discover our resources"
   },
-"tracking": {
+  "tracking": {
     "title": "File tracking",
     "subtitle": "Track the progress of your request",
     "enterTracking": "Enter your tracking number",
@@ -508,7 +603,7 @@
   },
   "faq": {
     "title": "Frequently Asked Questions",
-    "subtitle": "Find quick answers to your questions about our company creation services in Côte d'Ivoire.",
+    "subtitle": "Find quick answers to your questions about our company creation services in Ivory Coast.",
     "searchPlaceholder": "Search a question...",
     "allCategories": "All categories",
     "results": "result(s) for",
@@ -517,22 +612,14 @@
     "showAll": "Show all questions",
     "stillQuestions": "Still have questions?",
     "stillQuestionsDesc": "Our team is available to answer all your questions.",
-    "contactUs": "Contact us"
-  },
-  "payment": {
-    "verifying": "Verifying...",
-    "verifyingDesc": "We are verifying your payment with our system.",
-    "successTitle": "Payment successful!",
-    "successDesc": "Your payment was successful. Your request is now being processed by our team.",
-    "failedTitle": "Payment failed",
-    "failedDesc": "The payment could not be completed. Please try again or contact support.",
-    "pendingTitle": "Payment pending",
-    "pendingDesc": "Your payment is being processed. You will receive an email notification once confirmed.",
-    "transactionRef": "Transaction reference",
-    "trackingNumber": "Tracking number",
-    "goToDashboard": "Go to my dashboard",
-    "retry": "Retry payment",
-    "backHome": "Back to home"
+    "contactUs": "Contact us",
+    "categories": {
+      "companyCreation": "Company Creation",
+      "payment": "Payment & Pricing",
+      "process": "Process & Tracking",
+      "documents": "Documents & Deliverables",
+      "services": "Additional Services"
+    }
   },
   "notifications": {
     "paymentApproved": "Payment confirmed!",
@@ -598,6 +685,51 @@
     "pending": "Pending",
     "codePlaceholder": "Referral code (optional)",
     "referrerName": "Referrer name",
-    "discountApplied": "Referral discount applied: -10,000 FCFA"
+    "discountApplied": "Referral discount applied: -10,000 FCFA",
+    "noReferrals": "No referrals yet",
+    "noReferralsDesc": "Share your link to start earning",
+    "withdrawalRequested": "Withdrawal requested",
+    "withdrawalRequestedDesc": "Your withdrawal request has been submitted.",
+    "withdrawalHistory": "Withdrawal history",
+    "noWithdrawals": "No withdrawals yet",
+    "minWithdrawal": "Minimum withdrawal: 10,000 FCFA",
+    "paymentMethod": "Payment method",
+    "mobileMoneyNumber": "Mobile Money number",
+    "amount": "Amount",
+    "requestedAt": "Requested at",
+    "processedAt": "Processed at",
+    "adminNotes": "Admin notes"
+  },
+  "news": {
+    "title": "News",
+    "subtitle": "Stay informed about our latest updates",
+    "latestNews": "Latest news",
+    "allNews": "All news",
+    "noNews": "No news available",
+    "readMore": "Read more",
+    "publishedOn": "Published on",
+    "views": "views"
+  },
+  "welcome": {
+    "title": "Welcome to Legal Form",
+    "subtitle": "Your partner for company creation in Ivory Coast",
+    "feature1": {
+      "title": "Fast Service",
+      "desc": "Create your company in just a few days"
+    },
+    "feature2": {
+      "title": "Expert Support",
+      "desc": "Our team guides you every step of the way"
+    },
+    "feature3": {
+      "title": "Competitive Prices",
+      "desc": "Transparent and affordable pricing"
+    },
+    "feature4": {
+      "title": "Complete Coverage",
+      "desc": "We operate throughout Ivory Coast"
+    },
+    "startNow": "Start now",
+    "exploreMore": "Explore more"
   }
 }
