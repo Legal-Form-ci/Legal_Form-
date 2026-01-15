@@ -576,5 +576,28 @@
     "success": "Testimonial sent",
     "successDesc": "Your testimonial will be published after validation by our team.",
     "error": "Error"
+  },
+  "referral": {
+    "title": "Referral Program",
+    "subtitle": "Earn 10,000 FCFA for every validated referral",
+    "yourCode": "Your referral code",
+    "yourLink": "Your referral link",
+    "copied": "Copied!",
+    "share": "Share",
+    "howItWorks": "How it works?",
+    "step1": "Share your link or code with a friend",
+    "step2": "They get a 10,000 FCFA discount on their company creation",
+    "step3": "You earn 10,000 FCFA once their payment is validated",
+    "referrals": "Referrals",
+    "validated": "Validated",
+    "earned": "FCFA earned",
+    "available": "Available",
+    "requestWithdrawal": "Request withdrawal",
+    "myReferrals": "My referrals",
+    "referralHistory": "Referral history",
+    "pending": "Pending",
+    "codePlaceholder": "Referral code (optional)",
+    "referrerName": "Referrer name",
+    "discountApplied": "Referral discount applied: -10,000 FCFA"
   }
 }

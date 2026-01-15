@@ -561,5 +561,28 @@
     "success": "Testimonio enviado",
     "successDesc": "Tu testimonio será publicado después de la validación por nuestro equipo.",
     "error": "Error"
+  },
+  "referral": {
+    "title": "Programa de Referidos",
+    "subtitle": "Gana 10.000 FCFA por cada referido validado",
+    "yourCode": "Tu código de referido",
+    "yourLink": "Tu enlace de referido",
+    "copied": "¡Copiado!",
+    "share": "Compartir",
+    "howItWorks": "¿Cómo funciona?",
+    "step1": "Comparte tu enlace o código con un amigo",
+    "step2": "Obtiene 10.000 FCFA de descuento en la creación de su empresa",
+    "step3": "Ganas 10.000 FCFA cuando su pago sea validado",
+    "referrals": "Referidos",
+    "validated": "Validados",
+    "earned": "FCFA ganados",
+    "available": "Disponible",
+    "requestWithdrawal": "Solicitar retiro",
+    "myReferrals": "Mis referidos",
+    "referralHistory": "Historial de referidos",
+    "pending": "Pendiente",
+    "codePlaceholder": "Código de referido (opcional)",
+    "referrerName": "Nombre del referente",
+    "discountApplied": "Descuento de referido aplicado: -10.000 FCFA"
   }
 }

@@ -72,6 +72,7 @@ const AdminLayout = ({ children }: { children?: React.ReactNode }) => {
     { label: "Documents ID", href: "/admin/identity-documents", icon: FileText },
     { label: "Factures", href: "/admin/invoices", icon: FileText },
     { label: "Paiements", href: "/admin/payments", icon: CreditCard },
+    { label: "Retraits parrainage", href: "/admin/referral-withdrawals", icon: CreditCard },
     { label: "Base de données", href: "/admin/database", icon: Database },
     { label: "Témoignages", href: "/admin/testimonials", icon: Star },
     { label: "Utilisateurs internes", href: "/admin/team", icon: Users },
