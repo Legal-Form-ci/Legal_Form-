@@ -5,8 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Gift, Copy, Users, Wallet, ExternalLink, Share2 } from "lucide-react";
+import { Gift, Copy, Users, Wallet, Share2, ArrowUpRight, CheckCircle2 } from "lucide-react";
 
 interface ReferralData {
   referral_code: string | null;
@@ -23,6 +25,14 @@ interface ReferredUser {
   estimated_price: number | null;
 }
 
+interface WithdrawalRequest {
+  id: string;
+  amount: number;
+  status: string;
+  requested_at: string;
+  payment_method: string | null;
+}
+
 interface ReferralSectionProps {
   userId: string;
 }
@@ -32,7 +42,12 @@ const ReferralSection = ({ userId }: ReferralSectionProps) => {
   const { toast } = useToast();
   const [referralData, setReferralData] = useState<ReferralData | null>(null);
   const [referredUsers, setReferredUsers] = useState<ReferredUser[]>([]);
+  const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
+  const [withdrawing, setWithdrawing] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("");
+  const [paymentDetails, setPaymentDetails] = useState("");
 
   useEffect(() => {
     fetchReferralData();
@@ -62,6 +77,17 @@ const ReferralSection = ({ userId }: ReferralSectionProps) => {
           setReferredUsers(referred);
         }
       }
+
+      // Get withdrawal history
+      const { data: withdrawalData, error: withdrawalError } = await supabase
+        .from('referral_withdrawals')
+        .select('*')
+        .eq('user_id', userId)
+        .order('requested_at', { ascending: false });
+
+      if (!withdrawalError && withdrawalData) {
+        setWithdrawals(withdrawalData);
+      }
     } catch (error) {
       console.error('Error fetching referral data:', error);
     } finally {
@@ -87,6 +113,67 @@ const ReferralSection = ({ userId }: ReferralSectionProps) => {
     }
   };
 
+  const handleWithdrawRequest = async () => {
+    if (!paymentMethod) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez sélectionner un mode de paiement",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setWithdrawing(true);
+    try {
+      const earnings = referralData?.referral_earnings || 0;
+      
+      const { error } = await supabase
+        .from('referral_withdrawals')
+        .insert({
+          user_id: userId,
+          amount: earnings,
+          payment_method: paymentMethod,
+          payment_details: { details: paymentDetails },
+          status: 'pending'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Demande envoyée !",
+        description: "Votre demande de retrait est en cours de traitement."
+      });
+
+      setWithdrawDialogOpen(false);
+      setPaymentMethod("");
+      setPaymentDetails("");
+      fetchReferralData();
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setWithdrawing(false);
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">En attente</Badge>;
+      case 'approved':
+        return <Badge className="bg-blue-500 text-white">Approuvé</Badge>;
+      case 'paid':
+        return <Badge className="bg-green-500 text-white">Payé</Badge>;
+      case 'rejected':
+        return <Badge variant="destructive">Rejeté</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
   if (loading) {
     return (
       <Card className="border-2">
@@ -106,6 +193,8 @@ const ReferralSection = ({ userId }: ReferralSectionProps) => {
   const earnings = referralData?.referral_earnings || 0;
   const referralsCount = referralData?.referral_count || 0;
   const successfulReferrals = referredUsers.filter(r => r.payment_status === 'approved').length;
+  const pendingWithdrawals = withdrawals.filter(w => w.status === 'pending').reduce((sum, w) => sum + w.amount, 0);
+  const availableBalance = earnings - pendingWithdrawals;
 
   return (
     <div className="space-y-6">
@@ -133,7 +222,7 @@ const ReferralSection = ({ userId }: ReferralSectionProps) => {
               <p className="text-xs text-muted-foreground">Filleuls</p>
             </div>
             <div className="text-center p-4 bg-background rounded-xl border">
-              <Gift className="h-5 w-5 mx-auto mb-2 text-green-500" />
+              <CheckCircle2 className="h-5 w-5 mx-auto mb-2 text-green-500" />
               <p className="text-2xl font-bold text-foreground">{successfulReferrals}</p>
               <p className="text-xs text-muted-foreground">Validés</p>
             </div>
@@ -143,8 +232,8 @@ const ReferralSection = ({ userId }: ReferralSectionProps) => {
               <p className="text-xs text-muted-foreground">FCFA gagnés</p>
             </div>
             <div className="text-center p-4 bg-background rounded-xl border">
-              <Wallet className="h-5 w-5 mx-auto mb-2 text-yellow-500" />
-              <p className="text-2xl font-bold text-foreground">{earnings.toLocaleString()}</p>
+              <ArrowUpRight className="h-5 w-5 mx-auto mb-2 text-primary" />
+              <p className="text-2xl font-bold text-foreground">{availableBalance.toLocaleString()}</p>
               <p className="text-xs text-muted-foreground">Disponible</p>
             </div>
           </div>
@@ -204,14 +293,44 @@ const ReferralSection = ({ userId }: ReferralSectionProps) => {
           </div>
 
           {/* Withdraw Button */}
-          {earnings > 0 && (
-            <Button className="w-full bg-accent hover:bg-accent/90">
+          {availableBalance > 0 && (
+            <Button 
+              onClick={() => setWithdrawDialogOpen(true)}
+              className="w-full bg-accent hover:bg-accent/90"
+            >
               <Wallet className="mr-2 h-4 w-4" />
-              Demander un retrait ({earnings.toLocaleString()} FCFA)
+              Demander un retrait ({availableBalance.toLocaleString()} FCFA)
             </Button>
           )}
         </CardContent>
       </Card>
+
+      {/* Withdrawal History */}
+      {withdrawals.length > 0 && (
+        <Card className="border-2">
+          <CardHeader>
+            <CardTitle className="text-lg">Historique des retraits</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {withdrawals.map((withdrawal) => (
+                <div
+                  key={withdrawal.id}
+                  className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                >
+                  <div>
+                    <p className="font-medium">{withdrawal.amount.toLocaleString()} FCFA</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(withdrawal.requested_at).toLocaleDateString('fr-FR')} - {withdrawal.payment_method}
+                    </p>
+                  </div>
+                  {getStatusBadge(withdrawal.status)}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Referred Users List */}
       {referredUsers.length > 0 && (
@@ -251,6 +370,60 @@ const ReferralSection = ({ userId }: ReferralSectionProps) => {
           </CardContent>
         </Card>
       )}
+
+      {/* Withdraw Dialog */}
+      <Dialog open={withdrawDialogOpen} onOpenChange={setWithdrawDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Demander un retrait</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="p-4 bg-primary/10 rounded-lg text-center">
+              <p className="text-sm text-muted-foreground">Montant disponible</p>
+              <p className="text-3xl font-bold text-primary">{availableBalance.toLocaleString()} FCFA</p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Mode de paiement</label>
+              <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionnez un mode de paiement" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="mobile_money">Mobile Money (Orange/MTN/Moov)</SelectItem>
+                  <SelectItem value="wave">Wave</SelectItem>
+                  <SelectItem value="bank_transfer">Virement bancaire</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                {paymentMethod === 'bank_transfer' ? 'IBAN / RIB' : 'Numéro de téléphone'}
+              </label>
+              <Input
+                value={paymentDetails}
+                onChange={(e) => setPaymentDetails(e.target.value)}
+                placeholder={paymentMethod === 'bank_transfer' ? 'CI00 XXXX XXXX XXXX...' : '07 XX XX XX XX'}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setWithdrawDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button 
+              onClick={handleWithdrawRequest} 
+              disabled={withdrawing || !paymentMethod}
+              className="bg-accent hover:bg-accent/90"
+            >
+              {withdrawing ? "Envoi..." : "Confirmer le retrait"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

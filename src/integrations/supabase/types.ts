@@ -640,6 +640,51 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_withdrawals: {
+        Row: {
+          admin_notes: string | null
+          amount: number
+          created_at: string
+          id: string
+          payment_details: Json | null
+          payment_method: string | null
+          processed_at: string | null
+          processed_by: string | null
+          requested_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          amount: number
+          created_at?: string
+          id?: string
+          payment_details?: Json | null
+          payment_method?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          payment_details?: Json | null
+          payment_method?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       request_documents_exchange: {
         Row: {
           created_at: string

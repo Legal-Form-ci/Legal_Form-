@@ -583,5 +583,28 @@
     "success": "Témoignage envoyé",
     "successDesc": "Votre témoignage sera publié après validation par notre équipe.",
     "error": "Erreur"
+  },
+  "referral": {
+    "title": "Programme Parrainage",
+    "subtitle": "Gagnez 10 000 FCFA pour chaque parrainage validé",
+    "yourCode": "Votre code parrain",
+    "yourLink": "Votre lien de parrainage",
+    "copied": "Copié !",
+    "share": "Partager",
+    "howItWorks": "Comment ça marche ?",
+    "step1": "Partagez votre lien ou code avec un proche",
+    "step2": "Il bénéficie de 10 000 FCFA de réduction sur sa création d'entreprise",
+    "step3": "Vous gagnez 10 000 FCFA dès que son paiement est validé",
+    "referrals": "Filleuls",
+    "validated": "Validés",
+    "earned": "FCFA gagnés",
+    "available": "Disponible",
+    "requestWithdrawal": "Demander un retrait",
+    "myReferrals": "Mes filleuls",
+    "referralHistory": "Historique de vos parrainages",
+    "pending": "En attente",
+    "codePlaceholder": "Code du parrain (optionnel)",
+    "referrerName": "Nom du parrain",
+    "discountApplied": "Réduction parrainage appliquée : -10 000 FCFA"
   }
 }
