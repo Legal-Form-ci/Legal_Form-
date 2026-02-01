@@ -38,13 +38,47 @@ const parseNumber = (value: string) => {
   return value.replace(/\s/g, '');
 };
 
+// Local storage persistence
+const DRAFT_KEY = "legalform_create_draft";
+
+const saveDraft = (data: any) => {
+  try {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({ ...data, savedAt: new Date().toISOString() }));
+  } catch (e) {
+    console.error("Failed to save draft:", e);
+  }
+};
+
+const loadDraft = () => {
+  try {
+    const stored = localStorage.getItem(DRAFT_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch (e) {
+    console.error("Failed to load draft:", e);
+    return null;
+  }
+};
+
+const clearDraft = () => {
+  localStorage.removeItem(DRAFT_KEY);
+};
+
 const Create = () => {
   const { t } = useTranslation();
-  const [step, setStep] = useState(1);
+  const [searchParams] = useSearchParams();
+  const { user, loading } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  // Load draft on mount
+  const draft = loadDraft();
+
+  const [step, setStep] = useState(() => draft?.step || 1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  
   // Step 1: Company identification
-  const [companyData, setCompanyData] = useState({
+  const [companyData, setCompanyData] = useState(() => draft?.companyData || {
     structureType: "",
     companyName: "",
     sigle: "",
@@ -54,7 +88,7 @@ const Create = () => {
   });
   
   // Step 2: Location
-  const [locationData, setLocationData] = useState({
+  const [locationData, setLocationData] = useState(() => draft?.locationData || {
     city: "",
     commune: "",
     quartier: "",
@@ -63,7 +97,7 @@ const Create = () => {
   });
   
   // Step 3: Manager info
-  const [managerData, setManagerData] = useState({
+  const [managerData, setManagerData] = useState(() => draft?.managerData || {
     fullName: "",
     mandatDuration: "",
     phone: "",
@@ -74,7 +108,7 @@ const Create = () => {
   });
   
   // Step 4: Associates (for SARLU only one)
-  const [associates, setAssociates] = useState<Associate[]>([{
+  const [associates, setAssociates] = useState<Associate[]>(() => draft?.associates || [{
     id: "1",
     fullName: "",
     phone: "",
@@ -86,24 +120,19 @@ const Create = () => {
   }]);
   
   // Step 5: Additional services
-  const [additionalServices, setAdditionalServices] = useState<string[]>([]);
+  const [additionalServices, setAdditionalServices] = useState<string[]>(() => draft?.additionalServices || []);
   
   // Identity document data
   const [identityData, setIdentityData] = useState<{
     frontUrl?: string;
     backUrl?: string;
     faceDetected: boolean;
-  } | null>(null);
+  } | null>(draft?.identityData || null);
   
   // Referral system
-  const [searchParams] = useSearchParams();
-  const [referralCode, setReferralCode] = useState("");
+  const [referralCode, setReferralCode] = useState(() => draft?.referralCode || "");
   const [referrerName, setReferrerName] = useState("");
   const [isValidatingReferral, setIsValidatingReferral] = useState(false);
-  
-  const { user, loading } = useAuth();
-  const { toast } = useToast();
-  const navigate = useNavigate();
 
   // Check for referral code in URL params
   useEffect(() => {
@@ -122,7 +151,7 @@ const Create = () => {
     
     setIsValidatingReferral(true);
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('profiles')
         .select('full_name')
         .eq('referral_code', code.toUpperCase())
@@ -139,6 +168,21 @@ const Create = () => {
       setIsValidatingReferral(false);
     }
   };
+
+  // Auto-save draft on data changes
+  useEffect(() => {
+    const draftData = {
+      step,
+      companyData,
+      locationData,
+      managerData,
+      associates,
+      additionalServices,
+      identityData,
+      referralCode,
+    };
+    saveDraft(draftData);
+  }, [step, companyData, locationData, managerData, associates, additionalServices, identityData, referralCode]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -272,6 +316,8 @@ const Create = () => {
 
       // If additional services selected, price is "Sur devis"
       if (additionalServices.length > 0) {
+        // Clear draft after successful submission
+        clearDraft();
         toast({
           title: t('create.requestSent', 'Demande envoyée'),
           description: t('create.quoteMessage', 'Votre demande sera étudiée et un devis vous sera communiqué.'),
@@ -294,6 +340,9 @@ const Create = () => {
       });
 
       if (paymentError) throw paymentError;
+
+      // Clear draft after successful submission
+      clearDraft();
 
       toast({
         title: t('create.success', 'Demande enregistrée'),

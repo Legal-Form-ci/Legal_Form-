@@ -85,7 +85,9 @@ const App = () => (
           <Route path="/services/additional" element={<AdditionalServices />} />
           <Route path="/service-request" element={<ServiceRequest />} />
           <Route path="/create" element={<Create />} />
+          <Route path="/creer" element={<Create />} />
           <Route path="/creation" element={<Create />} />
+          <Route path="/mon-entreprise" element={<Create />} />
           <Route path="/regions" element={<Regions />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/tarifs" element={<Pricing />} />
