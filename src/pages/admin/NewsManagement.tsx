@@ -14,14 +14,13 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import AIContentGenerator from "@/components/AIContentGenerator";
 import { 
   Plus, 
   Edit2, 
   Trash2, 
   Eye, 
-  Upload, 
   Image as ImageIcon, 
-  FileVideo, 
   Save,
   Bold,
   Italic,
@@ -171,28 +170,22 @@ const NewsManagement = () => {
     const selectedText = formData.content.substring(start, end);
 
     let newText = "";
-    let cursorOffset = 0;
 
     switch (type) {
       case 'bold':
         newText = `**${selectedText || 'texte'}**`;
-        cursorOffset = selectedText ? 0 : 2;
         break;
       case 'italic':
         newText = `*${selectedText || 'texte'}*`;
-        cursorOffset = selectedText ? 0 : 1;
         break;
       case 'heading':
         newText = `## ${selectedText || 'Titre'}`;
-        cursorOffset = selectedText ? 0 : 3;
         break;
       case 'list':
         newText = `\n- ${selectedText || 'élément'}`;
-        cursorOffset = selectedText ? 0 : 3;
         break;
       case 'link':
         newText = `[${selectedText || 'texte'}](url)`;
-        cursorOffset = selectedText ? 0 : 1;
         break;
     }
 
@@ -450,6 +443,28 @@ const NewsManagement = () => {
                     placeholder={t('admin.contentPlaceholder', 'Contenu de l\'article (Markdown supporté)')}
                     rows={12}
                     className="rounded-t-none font-mono text-sm"
+                  />
+                </div>
+
+                {/* AI Content Generator */}
+                <div className="flex items-center gap-4 p-4 bg-muted rounded-md border-2 border-dashed border-primary/30">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Génération IA</p>
+                    <p className="text-xs text-muted-foreground">Écrivez votre contenu, puis cliquez sur Générer pour remplir automatiquement les autres champs</p>
+                  </div>
+                  <AIContentGenerator
+                    content={formData.content}
+                    onGenerate={(generated) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        title: generated.title || prev.title,
+                        excerpt: generated.excerpt || prev.excerpt,
+                        category: generated.category || prev.category,
+                        content: generated.formattedContent || prev.content,
+                        slug: generateSlug(generated.title || prev.title),
+                      }));
+                    }}
+                    disabled={formData.content.length < 20}
                   />
                 </div>
 
