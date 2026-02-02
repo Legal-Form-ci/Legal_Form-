@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
-import { Calendar, ArrowRight, Tag } from "lucide-react";
+import { Calendar, ArrowRight, Tag, ChevronLeft, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import useEmblaCarousel from "embla-carousel-react";
+import Autoplay from "embla-carousel-autoplay";
 
 interface BlogPost {
   id: string;
@@ -25,6 +26,11 @@ const NewsSection = () => {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    { loop: true, align: "start" },
+    [Autoplay({ delay: 4000, stopOnInteraction: false })]
+  );
+
   useEffect(() => {
     const fetchPosts = async () => {
       const { data, error } = await supabase
@@ -32,7 +38,7 @@ const NewsSection = () => {
         .select('id, title, slug, excerpt, cover_image, category, published_at, created_at')
         .eq('is_published', true)
         .order('published_at', { ascending: false })
-        .limit(3);
+        .limit(5);
 
       if (!error && data) {
         setPosts(data);
@@ -51,13 +57,16 @@ const NewsSection = () => {
     });
   };
 
+  const scrollPrev = () => emblaApi?.scrollPrev();
+  const scrollNext = () => emblaApi?.scrollNext();
+
   if (loading) {
     return (
       <div className="space-y-3">
         <h3 className="text-lg font-heading font-semibold text-white mb-4">
           {t('home.news.title', 'Actualités')}
         </h3>
-        {[1, 2, 3].map((i) => (
+        {[1, 2].map((i) => (
           <Card key={i} className="bg-white/10 border-0">
             <CardContent className="p-3">
               <Skeleton className="h-4 w-3/4 bg-white/20 mb-2" />
@@ -80,24 +89,53 @@ const NewsSection = () => {
           <Tag className="h-5 w-5 text-accent" />
           {t('home.news.title', 'Actualités')}
         </h3>
+        <div className="flex gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-white/70 hover:text-white hover:bg-white/10"
+            onClick={scrollPrev}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-white/70 hover:text-white hover:bg-white/10"
+            onClick={scrollNext}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
       
-      <ScrollArea className="h-[300px] pr-4">
-        <div className="space-y-3">
+      <div className="overflow-hidden" ref={emblaRef}>
+        <div className="flex gap-3">
           {posts.map((post) => (
-            <Link key={post.id} to={`/blog/${post.slug}`}>
-              <Card className="bg-white/10 hover:bg-white/20 border-0 transition-all duration-300 group cursor-pointer">
+            <Link 
+              key={post.id} 
+              to={`/blog/${post.slug}`}
+              className="flex-[0_0_100%] min-w-0"
+            >
+              <Card className="bg-white/10 hover:bg-white/20 border-0 transition-all duration-300 group cursor-pointer h-full">
                 <CardContent className="p-4">
                   <div className="flex gap-3">
-                    {post.cover_image && (
+                    {post.cover_image ? (
                       <img
                         src={post.cover_image}
                         alt={post.title}
-                        className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
+                        className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
                       />
+                    ) : (
+                      <div className="w-20 h-20 bg-white/10 rounded-lg flex-shrink-0 flex items-center justify-center">
+                        <Tag className="h-8 w-8 text-white/40" />
+                      </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         {post.category && (
                           <Badge className="bg-accent/20 text-accent text-xs">
                             {post.category}
@@ -111,6 +149,11 @@ const NewsSection = () => {
                       <h4 className="text-sm font-medium text-white line-clamp-2 group-hover:text-accent transition-colors">
                         {post.title}
                       </h4>
+                      {post.excerpt && (
+                        <p className="text-xs text-white/60 line-clamp-2 mt-1">
+                          {post.excerpt}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -118,7 +161,7 @@ const NewsSection = () => {
             </Link>
           ))}
         </div>
-      </ScrollArea>
+      </div>
 
       <Link to="/actualites">
         <Button 

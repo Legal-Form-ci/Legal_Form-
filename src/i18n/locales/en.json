@@ -160,6 +160,7 @@
     "quoteMessage": "Your request will be reviewed and a quote will be sent to you.",
     "success": "Request registered",
     "redirectPayment": "Redirecting to payment page...",
+    "paymentLater": "Your request has been registered. You can make the payment from your client dashboard.",
     "sharesCount": "Number of shares",
     "sharesPercentage": "Percentage of shares"
   },
