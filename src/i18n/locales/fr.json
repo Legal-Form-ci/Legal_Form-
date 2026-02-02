@@ -152,7 +152,8 @@
     "requestSent": "Demande envoyée",
     "quoteMessage": "Votre demande sera étudiée et un devis vous sera communiqué.",
     "success": "Demande enregistrée",
-    "redirectPayment": "Redirection vers la page de paiement..."
+    "redirectPayment": "Redirection vers la page de paiement...",
+    "paymentLater": "Votre demande a été enregistrée. Vous pourrez effectuer le paiement depuis votre espace client."
   },
   "services": {
     "title": "Nos Services",

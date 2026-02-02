@@ -53,11 +53,11 @@ const AdminLayout = ({ children }: { children?: React.ReactNode }) => {
   } = useRealtimeNotifications(userRole === 'admin');
 
   useEffect(() => {
-    if (!loading) {
+    if (!loading && userRole !== null) {
       if (!user) {
-        navigate("/auth");
-      } else if (userRole !== 'admin') {
-        navigate("/client/dashboard");
+        navigate("/auth", { replace: true });
+      } else if (userRole !== 'admin' && userRole !== 'team') {
+        navigate("/client/dashboard", { replace: true });
       }
     }
   }, [user, userRole, loading, navigate]);

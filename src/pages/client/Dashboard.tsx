@@ -39,11 +39,11 @@ const ClientDashboard = () => {
   const [loadingRequests, setLoadingRequests] = useState(true);
 
   useEffect(() => {
-    if (!loading) {
+    if (!loading && userRole !== null) {
       if (!user) {
-        navigate("/auth");
-      } else if (userRole === 'admin') {
-        navigate("/admin/dashboard");
+        navigate("/auth", { replace: true });
+      } else if (userRole === 'admin' || userRole === 'team') {
+        navigate("/admin/dashboard", { replace: true });
       }
     }
   }, [user, userRole, loading, navigate]);

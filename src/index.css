@@ -21,8 +21,8 @@
     --primary-light: 179 85% 35%;
     --primary-dark: 179 100% 18%;
 
-    /* Coral/Orange accent for CTAs - softer, less harsh */
-    --accent: 18 75% 52%;
+    /* Warm coral accent for CTAs - much softer and readable */
+    --accent: 25 85% 55%;
     --accent-foreground: 0 0% 100%;
     
     --secondary: 210 20% 92%;
@@ -31,7 +31,8 @@
     --muted: 210 15% 95%;
     --muted-foreground: 210 12% 45%;
 
-    --destructive: 0 65% 50%;
+    /* Softer destructive - less aggressive red */
+    --destructive: 0 55% 55%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 210 15% 88%;
@@ -71,7 +72,7 @@
     --primary-light: 179 70% 45%;
     --primary-dark: 179 100% 24%;
 
-    --accent: 12 88% 60%;
+    --accent: 25 85% 60%;
     --accent-foreground: 0 0% 100%;
 
     --secondary: 210 20% 18%;
@@ -80,7 +81,8 @@
     --muted: 210 20% 16%;
     --muted-foreground: 210 12% 65%;
 
-    --destructive: 0 63% 50%;
+    /* Softer destructive in dark mode */
+    --destructive: 0 50% 55%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 210 20% 20%;

@@ -21,11 +21,11 @@ const Auth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user && userRole) {
+    if (user && userRole !== null) {
       if (userRole === 'admin' || userRole === 'team') {
-        navigate("/admin/dashboard");
+        navigate("/admin/dashboard", { replace: true });
       } else {
-        navigate("/client/dashboard");
+        navigate("/client/dashboard", { replace: true });
       }
     }
   }, [user, userRole, navigate]);

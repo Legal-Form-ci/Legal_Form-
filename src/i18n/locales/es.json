@@ -160,6 +160,7 @@
     "quoteMessage": "Tu solicitud será revisada y te enviaremos un presupuesto.",
     "success": "Solicitud registrada",
     "redirectPayment": "Redirigiendo a la página de pago...",
+    "paymentLater": "Tu solicitud ha sido registrada. Puedes realizar el pago desde tu panel de cliente.",
     "sharesCount": "Número de acciones",
     "sharesPercentage": "Porcentaje de acciones"
   },
