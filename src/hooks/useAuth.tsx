@@ -204,11 +204,18 @@ export const useAuth = () => {
         const role = roleData?.role || 'client';
         setUserRole(role);
         
-        if (role === 'admin' || role === 'team') {
-          navigate('/admin/dashboard');
-        } else {
-          navigate('/client/dashboard');
-        }
+        console.log('[useAuth] User role determined:', role);
+        
+        // Use setTimeout to ensure state is set before navigation
+        setTimeout(() => {
+          if (role === 'admin' || role === 'team') {
+            console.log('[useAuth] Navigating to admin dashboard');
+            navigate('/admin/dashboard', { replace: true });
+          } else {
+            console.log('[useAuth] Navigating to client dashboard');
+            navigate('/client/dashboard', { replace: true });
+          }
+        }, 100);
       }
       
       return { error: null };

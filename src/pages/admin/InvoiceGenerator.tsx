@@ -279,12 +279,12 @@ const InvoiceGenerator = () => {
           .notes-content { font-size: 11px; color: #555; }
           .footer { margin-top: 50px; padding-top: 20px; border-top: 2px solid #eee; display: flex; justify-content: space-between; align-items: flex-end; }
           .signature-section { text-align: center; }
-          .signature-line { width: 200px; border-bottom: 2px solid #1a1a1a; margin-bottom: 10px; padding-top: 60px; }
+          .signature-img { max-width: 120px; height: auto; margin: 0 auto 10px; }
+          .stamp-img { max-width: 100px; height: auto; margin: 0 auto 15px; transform: rotate(-5deg); }
           .signature-text { font-size: 10px; color: #666; }
           .signature-name { font-size: 12px; font-weight: 600; color: #1a1a1a; margin-top: 5px; }
           .footer-contact { text-align: right; font-size: 10px; color: #666; }
           .footer-contact div { margin-bottom: 3px; }
-          .stamp { width: 100px; height: 100px; border: 3px solid #007c7a; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #007c7a; font-weight: 700; font-size: 10px; text-align: center; transform: rotate(-15deg); margin: 0 auto 15px; }
           @media print {
             body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
             .invoice-container { padding: 20px; }
@@ -382,10 +382,10 @@ const InvoiceGenerator = () => {
 
           <div class="footer">
             <div class="signature-section">
-              <div class="stamp">LEGAL FORM<br/>CÔTE D'IVOIRE</div>
-              <div class="signature-line"></div>
+              <img src="/images/cachet-legal-form.png" alt="Cachet Legal Form" class="stamp-img" onerror="this.style.display='none'" />
+              <img src="/images/signature-dirigeant.png" alt="Signature S. KONAN" class="signature-img" onerror="this.style.display='none'" />
               <div class="signature-text">Signature autorisée</div>
-              <div class="signature-name">Direction Legal Form</div>
+              <div class="signature-name">S. KONAN - Direction Legal Form</div>
             </div>
             <div class="footer-contact">
               <div><strong>LEGAL FORM CI</strong></div>
