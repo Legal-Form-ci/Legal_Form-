@@ -58,6 +58,7 @@ import News from "./pages/News";
 import NewsManagement from "./pages/admin/NewsManagement";
 import DatabaseManager from "./pages/admin/DatabaseManager";
 import ReferralWithdrawals from "./pages/admin/ReferralWithdrawals";
+import Documentation from "./pages/admin/Documentation";
 import WelcomePopup from "./components/WelcomePopup";
 
 const queryClient = new QueryClient();
@@ -143,6 +144,7 @@ const App = () => (
           <Route path="/admin/news" element={<NewsManagement />} />
           <Route path="/admin/database" element={<DatabaseManager />} />
           <Route path="/admin/referral-withdrawals" element={<ReferralWithdrawals />} />
+          <Route path="/admin/documentation" element={<Documentation />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

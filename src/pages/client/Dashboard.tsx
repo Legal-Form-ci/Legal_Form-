@@ -39,12 +39,19 @@ const ClientDashboard = () => {
   const [loadingRequests, setLoadingRequests] = useState(true);
 
   useEffect(() => {
-    if (!loading && userRole !== null) {
-      if (!user) {
-        navigate("/auth", { replace: true });
-      } else if (userRole === 'admin' || userRole === 'team') {
-        navigate("/admin/dashboard", { replace: true });
-      }
+    // Wait for loading to complete
+    if (loading) return;
+    
+    // Only redirect if we have confirmed user status
+    if (!user) {
+      console.log('[ClientDashboard] No user, redirecting to auth');
+      navigate("/auth", { replace: true });
+      return;
+    }
+    
+    if (userRole !== null && (userRole === 'admin' || userRole === 'team')) {
+      console.log('[ClientDashboard] User is admin/team, redirecting to admin dashboard');
+      navigate("/admin/dashboard", { replace: true });
     }
   }, [user, userRole, loading, navigate]);
 

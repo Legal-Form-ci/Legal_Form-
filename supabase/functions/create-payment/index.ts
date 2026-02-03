@@ -17,7 +17,7 @@ interface PaymentRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  console.log('=== CREATE-PAYMENT FUNCTION STARTED ===');
+  console.log('=== CREATE-PAYMENT FUNCTION (KKIAPAY) STARTED ===');
   
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -28,12 +28,12 @@ const handler = async (req: Request): Promise<Response> => {
     // Get environment variables
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    const fedapaySecretKey = Deno.env.get('FEDAPAY_SECRET_KEY');
+    const kkiapayPublicKey = Deno.env.get('KKIAPAY_PUBLIC_KEY');
 
     console.log('Environment check:', {
       hasSupabaseUrl: !!supabaseUrl,
       hasSupabaseKey: !!supabaseKey,
-      hasFedapayKey: !!fedapaySecretKey
+      hasKkiapayKey: !!kkiapayPublicKey
     });
 
     if (!supabaseUrl || !supabaseKey) {
@@ -44,13 +44,8 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    if (!fedapaySecretKey) {
-      console.error('Missing FEDAPAY_SECRET_KEY');
-      return new Response(
-        JSON.stringify({ error: 'Server configuration error - FedaPay key not configured' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      );
-    }
+    // Note: KkiaPay payment is initiated client-side, so we just prepare the record
+    // and return the necessary data for the frontend to open the KkiaPay widget
 
     // Verify authentication
     const authHeader = req.headers.get('Authorization');
@@ -156,208 +151,87 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log('Creating FedaPay transaction...');
+    console.log('Request verified, preparing KkiaPay payment data...');
 
-    // Prepare customer data - handle phone number
     const cleanPhone = customerPhone ? customerPhone.replace(/[^0-9]/g, '') : '';
+
+    // Create a pending payment record
+    const paymentId = crypto.randomUUID();
     
-    // Determine FedaPay API base URL (sandbox or production)
-    const fedapayBaseUrl = fedapaySecretKey.startsWith('sk_live') 
-      ? 'https://api.fedapay.com' 
-      : 'https://sandbox-api.fedapay.com';
-
-    console.log('Using FedaPay URL:', fedapayBaseUrl);
-    console.log('API key prefix:', fedapaySecretKey.substring(0, 10));
-
-    // Get the app URL for redirects
-    const appUrl = Deno.env.get('APP_URL') || 'https://wpczgwxsriezaubncuom.lovableproject.com';
-
-    // Create FedaPay transaction with proper structure
-    const transactionPayload = {
-      description: description || `Paiement Legal Form - ${request.tracking_number || requestId}`,
-      amount: Math.round(amount),
-      currency: {
-        iso: 'XOF'
-      },
-      callback_url: `${supabaseUrl}/functions/v1/payment-webhook`,
-      customer: {
-        firstname: customerName.split(' ')[0] || customerName,
-        lastname: customerName.split(' ').slice(1).join(' ') || customerName,
-        email: customerEmail,
-        phone_number: cleanPhone ? {
-          number: cleanPhone,
-          country: 'CI'
-        } : undefined
-      },
-      metadata: {
-        request_id: requestId,
-        request_type: requestType,
-        tracking_number: request.tracking_number || '',
-        user_id: user.id
-      }
-    };
-
-    console.log('FedaPay payload:', JSON.stringify(transactionPayload, null, 2));
-
-    const fedapayResponse = await fetch(`${fedapayBaseUrl}/v1/transactions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${fedapaySecretKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(transactionPayload)
-    });
-
-    const fedapayResponseText = await fedapayResponse.text();
-    console.log('FedaPay response status:', fedapayResponse.status);
-    console.log('FedaPay response:', fedapayResponseText);
-
-    if (!fedapayResponse.ok) {
-      console.error('FedaPay API error:', fedapayResponseText);
-      return new Response(
-        JSON.stringify({ 
-          error: 'Payment service error', 
-          details: fedapayResponseText 
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 502 }
-      );
-    }
-
-    let transaction;
-    try {
-      transaction = JSON.parse(fedapayResponseText);
-    } catch (parseError) {
-      console.error('Failed to parse FedaPay response:', parseError);
-      return new Response(
-        JSON.stringify({ error: 'Invalid response from payment service' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 502 }
-      );
-    }
-
-    // FedaPay response structure: { v1: { id, reference, ... } }
-    const transactionData = transaction.v1 || transaction;
-    const transactionId = transactionData.id;
-
-    if (!transactionId) {
-      console.error('No transaction ID in response:', transaction);
-      return new Response(
-        JSON.stringify({ error: 'Invalid transaction response - no ID' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 502 }
-      );
-    }
-
-    console.log('FedaPay transaction created:', transactionId);
-
-    // Generate payment token to get payment URL
-    const tokenResponse = await fetch(`${fedapayBaseUrl}/v1/transactions/${transactionId}/token`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${fedapaySecretKey}`,
-        'Content-Type': 'application/json',
-      }
-    });
-
-    const tokenResponseText = await tokenResponse.text();
-    console.log('Token response status:', tokenResponse.status);
-    console.log('Token response:', tokenResponseText);
-
-    if (!tokenResponse.ok) {
-      console.error('FedaPay token error:', tokenResponseText);
-      return new Response(
-        JSON.stringify({ 
-          error: 'Failed to generate payment link', 
-          details: tokenResponseText 
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 502 }
-      );
-    }
-
-    let tokenData;
-    try {
-      tokenData = JSON.parse(tokenResponseText);
-    } catch (parseError) {
-      console.error('Failed to parse token response:', parseError);
-      return new Response(
-        JSON.stringify({ error: 'Invalid token response from payment service' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 502 }
-      );
-    }
-
-    const tokenInfo = tokenData.v1 || tokenData;
-    const paymentUrl = tokenInfo.url;
-
-    if (!paymentUrl) {
-      console.error('No payment URL in token response:', tokenData);
-      return new Response(
-        JSON.stringify({ error: 'No payment URL received' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 502 }
-      );
-    }
-
-    console.log('Payment URL generated:', paymentUrl);
-
-    // Create payment record in database
     const { error: paymentInsertError } = await supabase
       .from('payments')
       .insert({
+        id: paymentId,
         user_id: user.id,
         request_id: requestId,
         request_type: requestType,
         amount: Math.round(amount),
         currency: 'XOF',
         status: 'pending',
-        transaction_id: String(transactionId),
         customer_email: customerEmail,
         customer_name: customerName,
         customer_phone: cleanPhone,
         tracking_number: request.tracking_number,
+        payment_method: 'kkiapay',
         metadata: {
-          fedapay_reference: transactionData.reference,
-          description: description
+          description: description,
+          company_name: request.company_name
         }
       });
 
     if (paymentInsertError) {
       console.error('Error inserting payment record:', paymentInsertError);
-      // Don't fail the request, payment was created in FedaPay
+      // Don't fail - the payment can still proceed
+    } else {
+      console.log('Payment record created:', paymentId);
     }
 
-    // Update request with payment info
+    // Update request with pending payment info
     const { error: updateError } = await supabase
       .from(tableName)
       .update({
         payment_status: 'pending',
-        payment_id: String(transactionId),
         updated_at: new Date().toISOString()
       })
       .eq('id', requestId);
 
     if (updateError) {
       console.error('Error updating request:', updateError);
-      // Don't fail the request, payment was created
     }
 
     // Log the payment event
     await supabase
       .from('payment_logs')
       .insert({
-        payment_id: null, // We don't have the payment UUID yet
-        event_type: 'payment_initiated',
+        payment_id: paymentId,
+        event_type: 'kkiapay_initiated',
         event_data: {
-          transaction_id: transactionId,
           request_id: requestId,
           amount: amount,
-          payment_url: paymentUrl
+          customer_email: customerEmail
         }
       });
 
     console.log('=== CREATE-PAYMENT FUNCTION SUCCESS ===');
 
+    // Return data for KkiaPay widget (frontend handles the actual payment)
     return new Response(
       JSON.stringify({
         success: true,
-        paymentUrl,
-        transactionId: String(transactionId)
+        paymentMethod: 'kkiapay',
+        paymentId,
+        amount: Math.round(amount),
+        description: description || `Paiement Legal Form - ${request.tracking_number || requestId}`,
+        trackingNumber: request.tracking_number,
+        requestId,
+        requestType,
+        customer: {
+          name: customerName,
+          email: customerEmail,
+          phone: cleanPhone
+        },
+        // KkiaPay is handled client-side, no redirect URL needed
+        // Frontend will use the useKkiapay hook
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

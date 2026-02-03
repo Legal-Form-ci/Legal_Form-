@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation, Outlet } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { 
@@ -53,12 +53,19 @@ const AdminLayout = ({ children }: { children?: React.ReactNode }) => {
   } = useRealtimeNotifications(userRole === 'admin');
 
   useEffect(() => {
-    if (!loading && userRole !== null) {
-      if (!user) {
-        navigate("/auth", { replace: true });
-      } else if (userRole !== 'admin' && userRole !== 'team') {
-        navigate("/client/dashboard", { replace: true });
-      }
+    // Wait for loading to complete and userRole to be set
+    if (loading) return;
+    
+    // Only redirect if we have confirmed there's no user or wrong role
+    if (!user) {
+      console.log('[AdminLayout] No user, redirecting to auth');
+      navigate("/auth", { replace: true });
+      return;
+    }
+    
+    if (userRole !== null && userRole !== 'admin' && userRole !== 'team') {
+      console.log('[AdminLayout] User is client, redirecting to client dashboard');
+      navigate("/client/dashboard", { replace: true });
     }
   }, [user, userRole, loading, navigate]);
 
@@ -77,6 +84,7 @@ const AdminLayout = ({ children }: { children?: React.ReactNode }) => {
     { label: "Témoignages", href: "/admin/testimonials", icon: Star },
     { label: "Utilisateurs internes", href: "/admin/team", icon: Users },
     { label: "Statistiques", href: "/admin/analytics", icon: BarChart3 },
+    { label: "Documentation", href: "/admin/documentation", icon: FileText },
     { label: "Paramètres", href: "/admin/settings", icon: Settings },
   ];
 
