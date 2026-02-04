@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Building2, MapPin, FileText, CheckCircle2, Users, UserCircle, Plus, Trash2, IdCard, Gift, User } from "lucide-react";
+import { Building2, MapPin, FileText, CheckCircle2, Users, UserCircle, Plus, Trash2, Gift, User, IdCard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useKkiapay } from "@/hooks/useKkiapay";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -69,6 +70,57 @@ const Create = () => {
   const { user, loading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  
+  // Store request ID for payment callback
+  const [pendingRequestId, setPendingRequestId] = useState<string | null>(null);
+  
+  // KkiaPay integration
+  const { openPayment, isReady: kkiapayReady } = useKkiapay({
+    onSuccess: async (response) => {
+      console.log('[Create] KkiaPay payment success:', response);
+      
+      // Verify payment on backend
+      try {
+        await supabase.functions.invoke('verify-kkiapay-payment', {
+          body: {
+            transactionId: response.transactionId,
+            requestId: pendingRequestId,
+            amount: response.amount
+          }
+        });
+      } catch (err) {
+        console.error('[Create] Payment verification error:', err);
+      }
+      
+      toast({
+        title: t('create.paymentSuccess', 'Paiement réussi !'),
+        description: t('create.paymentSuccessDesc', 'Votre demande a été enregistrée avec succès.'),
+      });
+      
+      clearDraft();
+      navigate("/client/dashboard");
+    },
+    onFailed: (error) => {
+      console.error('[Create] KkiaPay payment failed:', error);
+      toast({
+        title: t('create.paymentFailed', 'Échec du paiement'),
+        description: t('create.paymentFailedDesc', 'Votre demande a été enregistrée. Vous pourrez payer depuis votre espace client.'),
+      });
+      navigate("/client/dashboard");
+    },
+    onClose: () => {
+      console.log('[Create] KkiaPay widget closed');
+      // Widget closed without payment - redirect to dashboard
+      if (pendingRequestId) {
+        toast({
+          title: t('create.success', 'Demande enregistrée'),
+          description: t('create.paymentLater', 'Votre demande a été enregistrée. Vous pourrez effectuer le paiement depuis votre espace client.'),
+        });
+        navigate("/client/dashboard");
+      }
+      setIsSubmitting(false);
+    }
+  });
 
   // Load draft on mount
   const draft = loadDraft();
@@ -333,66 +385,58 @@ const Create = () => {
         }
       }
 
-      // Clear draft after successful database submission
-      clearDraft();
-
       // If additional services selected, price is "Sur devis" - go to dashboard
       if (additionalServices.length > 0) {
+        clearDraft();
         toast({
           title: t('create.requestSent', 'Demande envoyée'),
           description: t('create.quoteMessage', 'Votre demande sera étudiée et un devis vous sera communiqué.'),
         });
+        setIsSubmitting(false);
         navigate("/client/dashboard");
         return;
       }
 
-      // Try to initiate payment, but don't fail if it doesn't work
-      try {
-        console.log('[Create] Initiating payment...');
-        const { data: paymentData, error: paymentError } = await supabase.functions.invoke('create-payment', {
-          body: {
-            amount: estimatedPrice,
-            description: `Création ${companyData.structureType.toUpperCase()} - ${companyData.companyName || 'Sans nom'}`,
+      // Store request ID for payment callback
+      setPendingRequestId(requestData.id);
+
+      // Open KkiaPay widget directly
+      if (kkiapayReady) {
+        console.log('[Create] Opening KkiaPay widget...');
+        const paymentOpened = openPayment({
+          amount: estimatedPrice,
+          name: managerData.fullName,
+          email: managerData.email,
+          phone: managerData.phone?.replace(/[^0-9]/g, ''),
+          reason: `Création ${companyData.structureType.toUpperCase()} - ${companyData.companyName}`,
+          data: {
             requestId: requestData.id,
             requestType: 'company',
-            customerEmail: managerData.email,
-            customerName: managerData.fullName,
-            customerPhone: managerData.phone
+            trackingNumber: requestData.tracking_number
           }
         });
 
-        if (paymentError) {
-          console.error('[Create] Payment error:', paymentError);
-          // Payment failed but request was created - redirect to dashboard
+        if (!paymentOpened) {
+          console.error('[Create] Failed to open KkiaPay widget');
+          // Widget failed to open, but request was saved - go to dashboard
+          clearDraft();
           toast({
             title: t('create.success', 'Demande enregistrée'),
             description: t('create.paymentLater', 'Votre demande a été enregistrée. Vous pourrez effectuer le paiement depuis votre espace client.'),
           });
-          navigate("/client/dashboard");
-          return;
-        }
-
-        if (paymentData?.paymentUrl) {
-          toast({
-            title: t('create.success', 'Demande enregistrée'),
-            description: t('create.redirectPayment', 'Redirection vers la page de paiement...'),
-          });
-          window.location.href = paymentData.paymentUrl;
-        } else {
-          // No payment URL - redirect to dashboard
-          toast({
-            title: t('create.success', 'Demande enregistrée'),
-            description: t('create.paymentLater', 'Votre demande a été enregistrée. Vous pourrez effectuer le paiement depuis votre espace client.'),
-          });
+          setIsSubmitting(false);
           navigate("/client/dashboard");
         }
-      } catch (paymentCatchError: any) {
-        console.error('[Create] Payment catch error:', paymentCatchError);
-        // Payment failed but request was created - redirect to dashboard
+        // If widget opened, the callbacks (onSuccess, onFailed, onClose) will handle navigation
+      } else {
+        // KkiaPay not ready - go to dashboard
+        console.log('[Create] KkiaPay not ready, redirecting to dashboard');
+        clearDraft();
         toast({
           title: t('create.success', 'Demande enregistrée'),
           description: t('create.paymentLater', 'Votre demande a été enregistrée. Vous pourrez effectuer le paiement depuis votre espace client.'),
         });
+        setIsSubmitting(false);
         navigate("/client/dashboard");
       }
       
@@ -403,7 +447,6 @@ const Create = () => {
         description: error.message || "Une erreur est survenue lors de l'enregistrement",
         variant: "destructive",
       });
-    } finally {
       setIsSubmitting(false);
     }
   };
