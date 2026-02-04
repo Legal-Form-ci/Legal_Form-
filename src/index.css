@@ -21,9 +21,9 @@
     --primary-light: 179 85% 35%;
     --primary-dark: 179 100% 18%;
 
-    /* Warm coral accent for CTAs - much softer and readable */
-    --accent: 25 85% 55%;
-    --accent-foreground: 0 0% 100%;
+    /* Gold/Amber accent - visible, elegant, complements turquoise */
+    --accent: 45 92% 45%;
+    --accent-foreground: 210 25% 10%;
     
     --secondary: 210 20% 92%;
     --secondary-foreground: 210 25% 15%;
@@ -43,7 +43,7 @@
     
     /* Custom design tokens */
     --gradient-hero: linear-gradient(135deg, hsl(179 100% 24%) 0%, hsl(179 100% 18%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(12 88% 55%) 0%, hsl(25 95% 52%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(45 92% 45%) 0%, hsl(40 95% 42%) 100%);
     --shadow-soft: 0 4px 20px -4px hsl(179 100% 24% / 0.15);
     --shadow-strong: 0 10px 40px -8px hsl(179 100% 24% / 0.25);
 
@@ -72,8 +72,8 @@
     --primary-light: 179 70% 45%;
     --primary-dark: 179 100% 24%;
 
-    --accent: 25 85% 60%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 45 92% 50%;
+    --accent-foreground: 210 25% 10%;
 
     --secondary: 210 20% 18%;
     --secondary-foreground: 0 0% 98%;
@@ -90,7 +90,7 @@
     --ring: 179 85% 35%;
     
     --gradient-hero: linear-gradient(135deg, hsl(179 85% 35%) 0%, hsl(179 100% 24%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(12 88% 60%) 0%, hsl(25 95% 55%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(45 92% 50%) 0%, hsl(40 95% 45%) 100%);
     --shadow-soft: 0 4px 20px -4px hsl(179 85% 35% / 0.2);
     --shadow-strong: 0 10px 40px -8px hsl(179 85% 35% / 0.3);
     --sidebar-background: 210 6% 10%;
