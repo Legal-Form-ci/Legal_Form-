@@ -14,7 +14,9 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AIContentGenerator from "@/components/AIContentGenerator";
+import ReactMarkdown from "react-markdown";
 import { 
   Plus, 
   Edit2, 
@@ -26,8 +28,23 @@ import {
   Italic,
   List,
   Heading,
+  Heading1,
+  Heading2,
+  Heading3,
   Link as LinkIcon,
-  Newspaper
+  Newspaper,
+  Quote,
+  Code,
+  Table as TableIcon,
+  AlignLeft,
+  AlignCenter,
+  ListOrdered,
+  Minus,
+  Palette,
+  Undo,
+  Redo,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 
 interface BlogPost {
@@ -46,6 +63,8 @@ interface BlogPost {
   created_at: string;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 const NewsManagement = () => {
   const { t } = useTranslation();
   const { user, userRole, loading: authLoading } = useAuth();
@@ -58,6 +77,10 @@ const NewsManagement = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [editorTab, setEditorTab] = useState<"write" | "preview">("write");
+  const [undoStack, setUndoStack] = useState<string[]>([]);
+  const [redoStack, setRedoStack] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -93,6 +116,13 @@ const NewsManagement = () => {
     setLoading(false);
   };
 
+  // Pagination
+  const totalPages = Math.ceil(posts.length / ITEMS_PER_PAGE);
+  const paginatedPosts = posts.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   const generateSlug = (title: string) => {
     return title
       .toLowerCase()
@@ -110,6 +140,31 @@ const NewsManagement = () => {
     }));
   };
 
+  const handleContentChange = (newContent: string) => {
+    // Save to undo stack
+    setUndoStack(prev => [...prev.slice(-20), formData.content]);
+    setRedoStack([]);
+    setFormData(prev => ({ ...prev, content: newContent }));
+  };
+
+  const handleUndo = () => {
+    if (undoStack.length > 0) {
+      const previousContent = undoStack[undoStack.length - 1];
+      setUndoStack(prev => prev.slice(0, -1));
+      setRedoStack(prev => [...prev, formData.content]);
+      setFormData(prev => ({ ...prev, content: previousContent }));
+    }
+  };
+
+  const handleRedo = () => {
+    if (redoStack.length > 0) {
+      const nextContent = redoStack[redoStack.length - 1];
+      setRedoStack(prev => prev.slice(0, -1));
+      setUndoStack(prev => [...prev, formData.content]);
+      setFormData(prev => ({ ...prev, content: nextContent }));
+    }
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -124,13 +179,13 @@ const NewsManagement = () => {
         const filePath = `blog/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
-          .from('documents')
-          .upload(filePath, file);
+          .from('company-logos')
+          .upload(filePath, file, { upsert: true });
 
         if (uploadError) throw uploadError;
 
         const { data: urlData } = supabase.storage
-          .from('documents')
+          .from('company-logos')
           .getPublicUrl(filePath);
 
         uploadedUrls.push(urlData.publicUrl);
@@ -142,11 +197,10 @@ const NewsManagement = () => {
       } else {
         // Insert images into content
         const imageMarkdown = uploadedUrls.map(url => `![Image](${url})`).join('\n\n');
-        setFormData(prev => ({ 
-          ...prev, 
-          content: prev.content + '\n\n' + imageMarkdown,
-          cover_image: prev.cover_image || uploadedUrls[0]
-        }));
+        handleContentChange(formData.content + '\n\n' + imageMarkdown);
+        if (!formData.cover_image) {
+          setFormData(prev => ({ ...prev, cover_image: uploadedUrls[0] }));
+        }
       }
 
       toast({ title: t('admin.uploadSuccess', 'Images téléchargées avec succès') });
@@ -161,7 +215,7 @@ const NewsManagement = () => {
     }
   };
 
-  const insertFormatting = (type: string) => {
+  const insertFormatting = (type: string, extraData?: string) => {
     const textarea = contentRef.current;
     if (!textarea) return;
 
@@ -170,28 +224,70 @@ const NewsManagement = () => {
     const selectedText = formData.content.substring(start, end);
 
     let newText = "";
+    let cursorOffset = 0;
 
     switch (type) {
       case 'bold':
-        newText = `**${selectedText || 'texte'}**`;
+        newText = `**${selectedText || 'texte en gras'}**`;
+        cursorOffset = selectedText ? 0 : -2;
         break;
       case 'italic':
-        newText = `*${selectedText || 'texte'}*`;
+        newText = `*${selectedText || 'texte en italique'}*`;
+        cursorOffset = selectedText ? 0 : -1;
         break;
-      case 'heading':
-        newText = `## ${selectedText || 'Titre'}`;
+      case 'h1':
+        newText = `\n# ${selectedText || 'Titre principal'}\n`;
+        break;
+      case 'h2':
+        newText = `\n## ${selectedText || 'Sous-titre'}\n`;
+        break;
+      case 'h3':
+        newText = `\n### ${selectedText || 'Section'}\n`;
         break;
       case 'list':
-        newText = `\n- ${selectedText || 'élément'}`;
+        newText = `\n- ${selectedText || 'élément de liste'}\n- élément 2\n- élément 3`;
+        break;
+      case 'numbered':
+        newText = `\n1. ${selectedText || 'premier élément'}\n2. deuxième élément\n3. troisième élément`;
         break;
       case 'link':
-        newText = `[${selectedText || 'texte'}](url)`;
+        newText = `[${selectedText || 'texte du lien'}](https://url.com)`;
+        break;
+      case 'quote':
+        newText = `\n> ${selectedText || 'Citation importante'}\n`;
+        break;
+      case 'code':
+        newText = selectedText.includes('\n') 
+          ? `\n\`\`\`\n${selectedText || 'code'}\n\`\`\`\n`
+          : `\`${selectedText || 'code'}\``;
+        break;
+      case 'table':
+        newText = `\n| Colonne 1 | Colonne 2 | Colonne 3 |\n|-----------|-----------|----------|\n| Données 1 | Données 2 | Données 3 |\n| Données 4 | Données 5 | Données 6 |\n`;
+        break;
+      case 'hr':
+        newText = `\n---\n`;
+        break;
+      case 'color':
+        // Color is applied via custom span (rendered in preview)
+        newText = `<span style="color:${extraData || '#008080'}">${selectedText || 'texte coloré'}</span>`;
+        break;
+      case 'center':
+        newText = `<div style="text-align:center">\n\n${selectedText || 'Texte centré'}\n\n</div>`;
         break;
     }
 
     const before = formData.content.substring(0, start);
     const after = formData.content.substring(end);
-    setFormData(prev => ({ ...prev, content: before + newText + after }));
+    handleContentChange(before + newText + after);
+
+    // Focus and set cursor position
+    setTimeout(() => {
+      if (textarea) {
+        textarea.focus();
+        const newPos = start + newText.length + cursorOffset;
+        textarea.setSelectionRange(newPos, newPos);
+      }
+    }, 0);
   };
 
   const handleSubmit = async () => {
@@ -212,7 +308,7 @@ const NewsManagement = () => {
     const postData = {
       title: formData.title,
       slug: formData.slug || generateSlug(formData.title),
-      excerpt: formData.excerpt || formData.content.substring(0, 200) + '...',
+      excerpt: formData.excerpt || formData.content.substring(0, 200).replace(/[#*_`]/g, '') + '...',
       content: formData.content,
       cover_image: formData.cover_image || null,
       category: formData.category || null,
@@ -265,6 +361,8 @@ const NewsManagement = () => {
       is_published: post.is_published || false,
       author_name: post.author_name || ""
     });
+    setUndoStack([]);
+    setRedoStack([]);
     setDialogOpen(true);
   };
 
@@ -301,6 +399,9 @@ const NewsManagement = () => {
       is_published: false,
       author_name: ""
     });
+    setUndoStack([]);
+    setRedoStack([]);
+    setEditorTab("write");
   };
 
   if (authLoading) {
@@ -312,6 +413,8 @@ const NewsManagement = () => {
       </AdminLayout>
     );
   }
+
+  const colorOptions = ['#008080', '#e74c3c', '#3498db', '#27ae60', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22'];
 
   return (
     <AdminLayout>
@@ -328,9 +431,10 @@ const NewsManagement = () => {
                 {t('admin.newArticle', 'Nouvel article')}
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>
+                <DialogTitle className="flex items-center gap-2">
+                  <Newspaper className="h-5 w-5 text-primary" />
                   {editingPost ? t('admin.editArticle', 'Modifier l\'article') : t('admin.newArticle', 'Nouvel article')}
                 </DialogTitle>
               </DialogHeader>
@@ -344,6 +448,7 @@ const NewsManagement = () => {
                       value={formData.title}
                       onChange={(e) => handleTitleChange(e.target.value)}
                       placeholder={t('admin.titlePlaceholder', 'Titre de l\'article')}
+                      className="text-lg font-semibold"
                     />
                   </div>
                   <div className="space-y-2">
@@ -357,14 +462,14 @@ const NewsManagement = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="category">{t('admin.category', 'Catégorie')}</Label>
                     <Input
                       id="category"
                       value={formData.category}
                       onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                      placeholder={t('admin.categoryPlaceholder', 'Fiscalité, Juridique, etc.')}
+                      placeholder="Fiscalité, Juridique, etc."
                     />
                   </div>
                   <div className="space-y-2">
@@ -376,16 +481,15 @@ const NewsManagement = () => {
                       placeholder="Legal Form"
                     />
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="tags">{t('admin.tags', 'Tags')} ({t('admin.commaSeparated', 'séparés par des virgules')})</Label>
-                  <Input
-                    id="tags"
-                    value={formData.tags}
-                    onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value }))}
-                    placeholder="fiscalité, entreprise, réforme"
-                  />
+                  <div className="space-y-2">
+                    <Label htmlFor="tags">{t('admin.tags', 'Tags')}</Label>
+                    <Input
+                      id="tags"
+                      value={formData.tags}
+                      onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value }))}
+                      placeholder="fiscalité, entreprise"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -399,28 +503,97 @@ const NewsManagement = () => {
                   />
                 </div>
 
-                {/* Rich text editor toolbar */}
+                {/* Advanced Rich Text Editor */}
                 <div className="space-y-2">
-                  <Label>{t('admin.content', 'Contenu')} *</Label>
-                  <div className="flex flex-wrap gap-2 p-2 border rounded-t-md bg-muted">
-                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('bold')}>
+                  <div className="flex items-center justify-between">
+                    <Label>{t('admin.content', 'Contenu')} *</Label>
+                    <div className="flex items-center gap-2">
+                      <Button type="button" size="sm" variant="ghost" onClick={handleUndo} disabled={undoStack.length === 0}>
+                        <Undo className="h-4 w-4" />
+                      </Button>
+                      <Button type="button" size="sm" variant="ghost" onClick={handleRedo} disabled={redoStack.length === 0}>
+                        <Redo className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {/* Toolbar */}
+                  <div className="flex flex-wrap gap-1 p-2 border rounded-t-md bg-muted">
+                    {/* Text formatting */}
+                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('bold')} title="Gras">
                       <Bold className="h-4 w-4" />
                     </Button>
-                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('italic')}>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('italic')} title="Italique">
                       <Italic className="h-4 w-4" />
                     </Button>
-                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('heading')}>
-                      <Heading className="h-4 w-4" />
+                    <div className="w-px h-6 bg-border mx-1" />
+                    
+                    {/* Headings */}
+                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('h1')} title="Titre H1">
+                      <Heading1 className="h-4 w-4" />
                     </Button>
-                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('list')}>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('h2')} title="Titre H2">
+                      <Heading2 className="h-4 w-4" />
+                    </Button>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('h3')} title="Titre H3">
+                      <Heading3 className="h-4 w-4" />
+                    </Button>
+                    <div className="w-px h-6 bg-border mx-1" />
+                    
+                    {/* Lists */}
+                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('list')} title="Liste à puces">
                       <List className="h-4 w-4" />
                     </Button>
-                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('link')}>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('numbered')} title="Liste numérotée">
+                      <ListOrdered className="h-4 w-4" />
+                    </Button>
+                    <div className="w-px h-6 bg-border mx-1" />
+                    
+                    {/* Advanced */}
+                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('quote')} title="Citation">
+                      <Quote className="h-4 w-4" />
+                    </Button>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('code')} title="Code">
+                      <Code className="h-4 w-4" />
+                    </Button>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('link')} title="Lien">
                       <LinkIcon className="h-4 w-4" />
                     </Button>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('table')} title="Tableau">
+                      <TableIcon className="h-4 w-4" />
+                    </Button>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('hr')} title="Ligne horizontale">
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <div className="w-px h-6 bg-border mx-1" />
+                    
+                    {/* Colors */}
+                    <div className="relative group">
+                      <Button type="button" size="sm" variant="ghost" title="Couleur du texte">
+                        <Palette className="h-4 w-4" />
+                      </Button>
+                      <div className="absolute top-full left-0 mt-1 hidden group-hover:flex gap-1 p-2 bg-popover border rounded-md shadow-lg z-50">
+                        {colorOptions.map(color => (
+                          <button
+                            key={color}
+                            type="button"
+                            onClick={() => insertFormatting('color', color)}
+                            className="w-6 h-6 rounded-full border-2 border-white shadow-sm hover:scale-110 transition-transform"
+                            style={{ backgroundColor: color }}
+                            title={color}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('center')} title="Centrer">
+                      <AlignCenter className="h-4 w-4" />
+                    </Button>
+                    
                     <div className="flex-1" />
+                    
+                    {/* Image upload */}
                     <Label htmlFor="imageUpload" className="cursor-pointer">
-                      <Button type="button" size="sm" variant="ghost" asChild disabled={uploading}>
+                      <Button type="button" size="sm" variant="outline" asChild disabled={uploading}>
                         <span>
                           <ImageIcon className="h-4 w-4 mr-1" />
                           {uploading ? 'Upload...' : 'Images'}
@@ -436,21 +609,65 @@ const NewsManagement = () => {
                       onChange={handleImageUpload}
                     />
                   </div>
-                  <Textarea
-                    ref={contentRef}
-                    value={formData.content}
-                    onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-                    placeholder={t('admin.contentPlaceholder', 'Contenu de l\'article (Markdown supporté)')}
-                    rows={12}
-                    className="rounded-t-none font-mono text-sm"
-                  />
+                  
+                  {/* Editor with tabs */}
+                  <Tabs value={editorTab} onValueChange={(v) => setEditorTab(v as "write" | "preview")}>
+                    <TabsList className="w-full justify-start">
+                      <TabsTrigger value="write">Écrire</TabsTrigger>
+                      <TabsTrigger value="preview">Aperçu</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="write" className="mt-0">
+                      <Textarea
+                        ref={contentRef}
+                        value={formData.content}
+                        onChange={(e) => handleContentChange(e.target.value)}
+                        placeholder="Rédigez votre article ici... (Markdown et HTML supportés)"
+                        rows={16}
+                        className="rounded-t-none font-mono text-sm min-h-[400px]"
+                      />
+                    </TabsContent>
+                    <TabsContent value="preview" className="mt-0">
+                      <div className="border rounded-md p-4 min-h-[400px] max-h-[500px] overflow-y-auto prose prose-sm max-w-none dark:prose-invert">
+                        {formData.content ? (
+                          <ReactMarkdown
+                            components={{
+                              h1: ({children}) => <h1 className="text-3xl font-bold text-primary mb-4 mt-6">{children}</h1>,
+                              h2: ({children}) => <h2 className="text-2xl font-semibold text-foreground mb-3 mt-5">{children}</h2>,
+                              h3: ({children}) => <h3 className="text-xl font-medium text-foreground mb-2 mt-4">{children}</h3>,
+                              p: ({children}) => <p className="mb-4 leading-relaxed">{children}</p>,
+                              ul: ({children}) => <ul className="list-disc list-inside mb-4 space-y-1">{children}</ul>,
+                              ol: ({children}) => <ol className="list-decimal list-inside mb-4 space-y-1">{children}</ol>,
+                              blockquote: ({children}) => <blockquote className="border-l-4 border-primary pl-4 italic my-4 bg-muted/50 py-2">{children}</blockquote>,
+                              table: ({children}) => <table className="w-full border-collapse border my-4">{children}</table>,
+                              th: ({children}) => <th className="border p-2 bg-muted font-semibold text-left">{children}</th>,
+                              td: ({children}) => <td className="border p-2">{children}</td>,
+                              code: ({children, className}) => className ? (
+                                <pre className="bg-muted p-3 rounded-md overflow-x-auto my-4"><code className="text-sm">{children}</code></pre>
+                              ) : (
+                                <code className="bg-muted px-1 py-0.5 rounded text-sm">{children}</code>
+                              ),
+                              hr: () => <hr className="my-6 border-t-2 border-muted" />,
+                              a: ({href, children}) => <a href={href} className="text-primary underline hover:text-primary/80" target="_blank" rel="noopener noreferrer">{children}</a>,
+                              img: ({src, alt}) => <img src={src} alt={alt || ''} className="max-w-full h-auto rounded-lg my-4" />,
+                            }}
+                          >
+                            {formData.content}
+                          </ReactMarkdown>
+                        ) : (
+                          <p className="text-muted-foreground">L'aperçu apparaîtra ici...</p>
+                        )}
+                      </div>
+                    </TabsContent>
+                  </Tabs>
                 </div>
 
                 {/* AI Content Generator */}
-                <div className="flex items-center gap-4 p-4 bg-muted rounded-md border-2 border-dashed border-primary/30">
+                <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-md border-2 border-dashed border-primary/30">
                   <div className="flex-1">
-                    <p className="text-sm font-medium">Génération IA</p>
-                    <p className="text-xs text-muted-foreground">Écrivez votre contenu, puis cliquez sur Générer pour remplir automatiquement les autres champs</p>
+                    <p className="text-sm font-medium flex items-center gap-2">
+                      ✨ Génération IA
+                    </p>
+                    <p className="text-xs text-muted-foreground">Écrivez votre contenu, puis cliquez sur Générer pour enrichir automatiquement</p>
                   </div>
                   <AIContentGenerator
                     content={formData.content}
@@ -476,6 +693,7 @@ const NewsManagement = () => {
                       value={formData.cover_image}
                       onChange={(e) => setFormData(prev => ({ ...prev, cover_image: e.target.value }))}
                       placeholder="https://..."
+                      className="flex-1"
                     />
                   </div>
                   {formData.cover_image && (
@@ -489,11 +707,11 @@ const NewsManagement = () => {
                       checked={formData.is_published}
                       onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_published: checked }))}
                     />
-                    <Label>{t('admin.publishNow', 'Publier maintenant')}</Label>
+                    <Label>Publier immédiatement</Label>
                   </div>
                   <Button onClick={handleSubmit} className="bg-primary hover:bg-primary/90">
                     <Save className="mr-2 h-4 w-4" />
-                    {editingPost ? t('admin.update', 'Mettre à jour') : t('admin.create', 'Créer')}
+                    {editingPost ? 'Mettre à jour' : 'Enregistrer'}
                   </Button>
                 </div>
               </div>
@@ -501,32 +719,30 @@ const NewsManagement = () => {
           </Dialog>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* Statistics */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card className="bg-slate-800 border-slate-700">
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-white">{posts.length}</div>
-              <p className="text-slate-400">{t('admin.totalArticles', 'Total articles')}</p>
+            <CardContent className="p-4">
+              <p className="text-slate-400 text-sm">Total articles</p>
+              <p className="text-2xl font-bold text-white">{posts.length}</p>
             </CardContent>
           </Card>
           <Card className="bg-slate-800 border-slate-700">
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-green-500">{posts.filter(p => p.is_published).length}</div>
-              <p className="text-slate-400">{t('admin.published', 'Publiés')}</p>
+            <CardContent className="p-4">
+              <p className="text-slate-400 text-sm">Publiés</p>
+              <p className="text-2xl font-bold text-green-400">{posts.filter(p => p.is_published).length}</p>
             </CardContent>
           </Card>
           <Card className="bg-slate-800 border-slate-700">
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-yellow-500">{posts.filter(p => !p.is_published).length}</div>
-              <p className="text-slate-400">{t('admin.drafts', 'Brouillons')}</p>
+            <CardContent className="p-4">
+              <p className="text-slate-400 text-sm">Brouillons</p>
+              <p className="text-2xl font-bold text-yellow-400">{posts.filter(p => !p.is_published).length}</p>
             </CardContent>
           </Card>
           <Card className="bg-slate-800 border-slate-700">
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-blue-400">
-                {posts.reduce((sum, p) => sum + (p.views_count || 0), 0)}
-              </div>
-              <p className="text-slate-400">{t('admin.totalViews', 'Vues totales')}</p>
+            <CardContent className="p-4">
+              <p className="text-slate-400 text-sm">Vues totales</p>
+              <p className="text-2xl font-bold text-primary">{posts.reduce((acc, p) => acc + (p.views_count || 0), 0)}</p>
             </CardContent>
           </Card>
         </div>
@@ -534,74 +750,110 @@ const NewsManagement = () => {
         {/* Articles Table */}
         <Card className="bg-slate-800 border-slate-700">
           <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Newspaper className="h-5 w-5" />
-              {t('admin.articles', 'Articles')}
+            <CardTitle className="text-white flex items-center justify-between">
+              <span>Articles ({posts.length})</span>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-2 text-sm font-normal">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-slate-400">
+                    Page {currentPage} / {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {loading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto"></div>
-              </div>
-            ) : posts.length === 0 ? (
-              <div className="text-center py-8 text-slate-400">
-                {t('admin.noArticles', 'Aucun article pour le moment')}
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-slate-700">
-                      <TableHead className="text-slate-300">{t('admin.title', 'Titre')}</TableHead>
-                      <TableHead className="text-slate-300">{t('admin.category', 'Catégorie')}</TableHead>
-                      <TableHead className="text-slate-300">{t('admin.status', 'Statut')}</TableHead>
-                      <TableHead className="text-slate-300">{t('admin.views', 'Vues')}</TableHead>
-                      <TableHead className="text-slate-300">{t('admin.date', 'Date')}</TableHead>
-                      <TableHead className="text-slate-300">{t('admin.actions', 'Actions')}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {posts.map((post) => (
-                      <TableRow key={post.id} className="border-slate-700 hover:bg-slate-700/50">
-                        <TableCell className="text-white font-medium max-w-[250px] truncate">
-                          {post.title}
-                        </TableCell>
-                        <TableCell className="text-slate-300">
-                          {post.category || '-'}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={post.is_published ? 'bg-green-500' : 'bg-yellow-500'}>
-                            {post.is_published ? t('admin.published', 'Publié') : t('admin.draft', 'Brouillon')}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-slate-300">
-                          {post.views_count || 0}
-                        </TableCell>
-                        <TableCell className="text-slate-300">
-                          {new Date(post.created_at).toLocaleDateString('fr-FR')}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button size="sm" variant="ghost" asChild className="text-slate-300 hover:text-white">
-                              <a href={`/blog/${post.slug}`} target="_blank" rel="noopener noreferrer">
-                                <Eye className="h-4 w-4" />
-                              </a>
-                            </Button>
-                            <Button size="sm" variant="ghost" onClick={() => handleEdit(post)} className="text-slate-300 hover:text-white">
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
-                            <Button size="sm" variant="ghost" onClick={() => handleDelete(post.id)} className="text-red-400 hover:text-red-300">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-slate-700">
+                  <TableHead className="text-slate-400">Image</TableHead>
+                  <TableHead className="text-slate-400">Titre</TableHead>
+                  <TableHead className="text-slate-400">Catégorie</TableHead>
+                  <TableHead className="text-slate-400">Statut</TableHead>
+                  <TableHead className="text-slate-400">Vues</TableHead>
+                  <TableHead className="text-slate-400">Date</TableHead>
+                  <TableHead className="text-slate-400">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center text-slate-400 py-8">
+                      Chargement...
+                    </TableCell>
+                  </TableRow>
+                ) : paginatedPosts.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center text-slate-400 py-8">
+                      Aucun article
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedPosts.map((post) => (
+                    <TableRow key={post.id} className="border-slate-700">
+                      <TableCell>
+                        {post.cover_image ? (
+                          <img src={post.cover_image} alt="" className="w-12 h-12 object-cover rounded" />
+                        ) : (
+                          <div className="w-12 h-12 bg-slate-700 rounded flex items-center justify-center">
+                            <Newspaper className="h-5 w-5 text-slate-500" />
                           </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
+                        )}
+                      </TableCell>
+                      <TableCell className="text-white font-medium max-w-[200px] truncate">
+                        {post.title}
+                      </TableCell>
+                      <TableCell>
+                        {post.category && (
+                          <Badge variant="secondary" className="bg-primary/20 text-primary">
+                            {post.category}
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={post.is_published ? "default" : "secondary"} className={post.is_published ? "bg-green-500" : "bg-yellow-500"}>
+                          {post.is_published ? "Publié" : "Brouillon"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-slate-400">{post.views_count || 0}</TableCell>
+                      <TableCell className="text-slate-400">
+                        {new Date(post.created_at).toLocaleDateString('fr-FR')}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button size="icon" variant="ghost" onClick={() => handleEdit(post)}>
+                            <Edit2 className="h-4 w-4 text-blue-400" />
+                          </Button>
+                          <Button size="icon" variant="ghost" asChild>
+                            <a href={`/blog/${post.slug}`} target="_blank" rel="noopener noreferrer">
+                              <Eye className="h-4 w-4 text-green-400" />
+                            </a>
+                          </Button>
+                          <Button size="icon" variant="ghost" onClick={() => handleDelete(post.id)}>
+                            <Trash2 className="h-4 w-4 text-red-400" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>

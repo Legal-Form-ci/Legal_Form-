@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
-import { Calendar, ArrowRight, Tag, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, ArrowRight, Tag, ChevronLeft, ChevronRight, Newspaper } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -86,7 +86,7 @@ const NewsSection = () => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-heading font-semibold text-white flex items-center gap-2">
-          <Tag className="h-5 w-5 text-accent" />
+          <Newspaper className="h-5 w-5 text-accent" />
           {t('home.news.title', 'Actualités')}
         </h3>
         <div className="flex gap-1">
@@ -117,44 +117,50 @@ const NewsSection = () => {
               to={`/blog/${post.slug}`}
               className="flex-[0_0_100%] min-w-0"
             >
-              <Card className="bg-white/10 hover:bg-white/20 border-0 transition-all duration-300 group cursor-pointer h-full">
-                <CardContent className="p-4">
-                  <div className="flex gap-3">
+              <Card className="bg-white/10 hover:bg-white/20 border-0 transition-all duration-300 group cursor-pointer h-full overflow-hidden">
+                <CardContent className="p-0">
+                  {/* Image section */}
+                  <div className="relative h-32 w-full overflow-hidden">
                     {post.cover_image ? (
                       <img
                         src={post.cover_image}
                         alt={post.title}
-                        className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none';
+                          // Fallback to placeholder
+                          (e.target as HTMLImageElement).src = '/placeholder.svg';
                         }}
                       />
                     ) : (
-                      <div className="w-20 h-20 bg-white/10 rounded-lg flex-shrink-0 flex items-center justify-center">
-                        <Tag className="h-8 w-8 text-white/40" />
+                      <div className="w-full h-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center">
+                        <Newspaper className="h-12 w-12 text-white/40" />
                       </div>
                     )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        {post.category && (
-                          <Badge className="bg-accent/20 text-accent text-xs">
-                            {post.category}
-                          </Badge>
-                        )}
-                        <span className="text-xs text-white/60 flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {formatDate(post.published_at || post.created_at)}
-                        </span>
-                      </div>
-                      <h4 className="text-sm font-medium text-white line-clamp-2 group-hover:text-accent transition-colors">
-                        {post.title}
-                      </h4>
-                      {post.excerpt && (
-                        <p className="text-xs text-white/60 line-clamp-2 mt-1">
-                          {post.excerpt}
-                        </p>
-                      )}
+                    {/* Overlay gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                    
+                    {/* Category badge */}
+                    {post.category && (
+                      <Badge className="absolute top-2 left-2 bg-accent/90 text-white text-xs">
+                        {post.category}
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  {/* Content section */}
+                  <div className="p-4">
+                    <div className="flex items-center gap-2 mb-2 text-white/60 text-xs">
+                      <Calendar className="h-3 w-3" />
+                      {formatDate(post.published_at || post.created_at)}
                     </div>
+                    <h4 className="text-sm font-medium text-white line-clamp-2 group-hover:text-accent transition-colors leading-tight">
+                      {post.title}
+                    </h4>
+                    {post.excerpt && (
+                      <p className="text-xs text-white/60 line-clamp-2 mt-2">
+                        {post.excerpt}
+                      </p>
+                    )}
                   </div>
                 </CardContent>
               </Card>

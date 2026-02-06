@@ -5,6 +5,7 @@ import { Building2, MapPin, FileText, CheckCircle2, Users, UserCircle, Plus, Tra
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useKkiapay } from "@/hooks/useKkiapay";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -70,6 +71,7 @@ const Create = () => {
   const { user, loading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { settings } = useSiteSettings();
   
   // Store request ID for payment callback
   const [pendingRequestId, setPendingRequestId] = useState<string | null>(null);
@@ -279,9 +281,9 @@ const Create = () => {
 
   const calculatePrice = (hasReferral: boolean = false) => {
     const isAbidjan = locationData.city.toLowerCase().includes('abidjan');
-    const basePrice = isAbidjan ? 199000 : 169000;
-    // Apply 10,000 FCFA discount if referred
-    return hasReferral ? basePrice - 10000 : basePrice;
+    const basePrice = isAbidjan ? settings.pricing.abidjan : settings.pricing.interior;
+    // Apply referral discount
+    return hasReferral ? basePrice - settings.pricing.referral_bonus : basePrice;
   };
 
   const addAssociate = () => {

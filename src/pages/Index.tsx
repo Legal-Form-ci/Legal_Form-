@@ -6,10 +6,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import NewsSection from "@/components/NewsSection";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 import heroBackground from "@/assets/hero-bg.jpg";
 
 const Index = () => {
   const { t } = useTranslation();
+  const { settings } = useSiteSettings();
 
   const services = [
     {
@@ -20,7 +22,7 @@ const Index = () => {
         "Entreprise Individuelle, SARL, SARLU",
         "Association, ONG, Fondation",
         "SCOOPS, SCI, GIE",
-        "SCOOPS, SCI, GIE"
+        "Filiale"
       ],
     },
     {
@@ -106,6 +108,11 @@ const Index = () => {
     },
   ];
 
+  // Format price with thousands separator
+  const formatPrice = (price: number) => {
+    return price.toLocaleString('fr-FR');
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -149,7 +156,7 @@ const Index = () => {
                   <div>
                     <p className="text-white font-semibold text-sm">Programme Parrainage</p>
                     <p className="text-white/80 text-xs">
-                      Gagnez 10 000 FCFA en parrainant un proche. Votre filleul bénéficie aussi de -10 000 FCFA !
+                      Gagnez {formatPrice(settings.pricing.referral_bonus)} FCFA en parrainant un proche. Votre filleul bénéficie aussi de -{formatPrice(settings.pricing.referral_bonus)} FCFA !
                     </p>
                   </div>
                 </div>
@@ -169,15 +176,15 @@ const Index = () => {
                 </Link>
               </div>
               
-              {/* Pricing highlight */}
+              {/* Pricing highlight - Dynamic from settings */}
               <div className="mt-8 flex flex-wrap gap-4 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-400">
                 <div className="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2 border border-white/20">
                   <p className="text-white/80 text-xs">Abidjan</p>
-                  <p className="text-white font-bold">199 000 FCFA</p>
+                  <p className="text-white font-bold">{formatPrice(settings.pricing.abidjan)} FCFA</p>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2 border border-white/20">
                   <p className="text-white/80 text-xs">Intérieur du pays</p>
-                  <p className="text-white font-bold">À partir de 169 000 FCFA</p>
+                  <p className="text-white font-bold">À partir de {formatPrice(settings.pricing.interior)} FCFA</p>
                 </div>
               </div>
             </div>
@@ -305,12 +312,21 @@ const Index = () => {
               <Card key={index} className="border-2 hover:shadow-lg transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-4 mb-4">
-                    <div className="w-14 h-14 rounded-full overflow-hidden bg-muted flex items-center justify-center border-2 border-primary/20">
+                    <div className="w-16 h-16 rounded-full overflow-hidden bg-white border-2 border-primary/20 flex items-center justify-center p-1">
                       {testimonial.logo ? (
-                        <img src={testimonial.logo} alt={testimonial.company} className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-xl font-bold text-primary">{testimonial.name.charAt(0)}</span>
-                      )}
+                        <img 
+                          src={testimonial.logo} 
+                          alt={testimonial.company} 
+                          className="w-full h-full object-contain rounded-full"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                            (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                          }}
+                        />
+                      ) : null}
+                      <span className={`text-xl font-bold text-primary ${testimonial.logo ? 'hidden' : ''}`}>
+                        {testimonial.name.charAt(0)}
+                      </span>
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center mb-1">
