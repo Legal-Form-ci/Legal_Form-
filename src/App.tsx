@@ -59,6 +59,7 @@ import NewsManagement from "./pages/admin/NewsManagement";
 import DatabaseManager from "./pages/admin/DatabaseManager";
 import ReferralWithdrawals from "./pages/admin/ReferralWithdrawals";
 import Documentation from "./pages/admin/Documentation";
+import FAQManagement from "./pages/admin/FAQManagement";
 import WelcomePopup from "./components/WelcomePopup";
 
 const queryClient = new QueryClient();
@@ -145,6 +146,7 @@ const App = () => (
           <Route path="/admin/database" element={<DatabaseManager />} />
           <Route path="/admin/referral-withdrawals" element={<ReferralWithdrawals />} />
           <Route path="/admin/documentation" element={<Documentation />} />
+          <Route path="/admin/faq" element={<FAQManagement />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
