@@ -108,7 +108,7 @@ export default function UsersManagement() {
 
   const fetchUsers = async () => {
     try {
-      // Fetch profiles with referral info
+      // Fetch all profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, user_id, full_name, phone, referral_code, referral_link, referral_count, referral_earnings, created_at')
@@ -116,23 +116,31 @@ export default function UsersManagement() {
 
       if (profilesError) throw profilesError;
 
-      // Fetch roles for each user
-      const usersWithRoles = await Promise.all(
-        (profiles || []).map(async (profile) => {
-          // Get role
-          const { data: roleData } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', profile.user_id)
-            .maybeSingle();
+      // Fetch ALL roles at once for efficiency
+      const { data: allRoles } = await supabase
+        .from('user_roles')
+        .select('user_id, role');
 
-          return {
-            ...profile,
-            role: roleData?.role || 'client',
-            email: '', // Email needs to be fetched separately or stored in profile
-          };
-        })
-      );
+      const rolesMap = new Map((allRoles || []).map(r => [r.user_id, r.role]));
+
+      // Also try to get emails from company_requests for users
+      const { data: requestEmails } = await supabase
+        .from('company_requests')
+        .select('user_id, email')
+        .order('created_at', { ascending: false });
+      
+      const emailsMap = new Map<string, string>();
+      (requestEmails || []).forEach(r => {
+        if (r.user_id && r.email && !emailsMap.has(r.user_id)) {
+          emailsMap.set(r.user_id, r.email);
+        }
+      });
+
+      const usersWithRoles = (profiles || []).map((profile) => ({
+        ...profile,
+        role: rolesMap.get(profile.user_id) || 'client',
+        email: emailsMap.get(profile.user_id) || '',
+      }));
 
       setUsers(usersWithRoles);
     } catch (error: any) {

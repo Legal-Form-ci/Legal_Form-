@@ -1039,22 +1039,18 @@ const Create = () => {
                       <p className="text-lg font-semibold">
                         {t('create.estimatedPrice', 'Tarif estimé')} :
                       </p>
-                      {additionalServices.length > 0 ? (
-                        <p className="text-2xl font-bold text-accent">
-                          {t('create.onQuote', 'Sur devis')}
-                        </p>
-                      ) : (
-                        <p className="text-2xl font-bold text-primary">
-                          {formatNumber(calculatePrice())} FCFA
-                        </p>
-                      )}
+                      <p className="text-2xl font-bold text-primary">
+                        {t('create.onQuoteGeneral', 'Devis personnalisé')}
+                      </p>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {locationData.city.toLowerCase().includes('abidjan') 
-                        ? t('create.priceAbidjan', 'Tarif création à Abidjan : 180 000 FCFA')
-                        : t('create.priceInterior', 'Tarif création à l\'intérieur : à partir de 150 000 FCFA')
-                      }
+                      {t('create.quoteExplanation', 'Vous recevrez un devis détaillé et personnalisé après soumission de votre demande. Le tarif dépend de votre localisation et de la structure choisie.')}
                     </p>
+                    {referrerName && (
+                      <p className="text-sm text-accent font-medium mt-2">
+                        ✅ Parrainage validé par {referrerName} — une réduction sera appliquée sur votre devis.
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
