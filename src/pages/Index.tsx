@@ -1,17 +1,15 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ArrowRight, Building2, FileText, Users, Shield, CheckCircle2, Star, Lightbulb, DollarSign, Palette, GraduationCap, Gift } from "lucide-react";
+import { ArrowRight, Building2, FileText, Users, Shield, CheckCircle2, Star, Lightbulb, DollarSign, Palette, GraduationCap, Gift, Zap, Clock, HeadphonesIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import NewsSection from "@/components/NewsSection";
-import { useSiteSettings } from "@/hooks/useSiteSettings";
 import heroBackground from "@/assets/hero-bg.jpg";
 
 const Index = () => {
   const { t } = useTranslation();
-  const { settings } = useSiteSettings();
 
   const services = [
     {
@@ -64,22 +62,22 @@ const Index = () => {
     { 
       number: "01", 
       title: t('home.steps.step1.title', 'Choisissez votre service'), 
-      description: t('home.steps.step1.desc', 'Digitalisation') 
+      description: t('home.steps.step1.desc', 'Sélectionnez la forme juridique adaptée à votre activité') 
     },
     { 
       number: "02", 
       title: t('home.steps.step2.title', 'Remplissez le formulaire'), 
-      description: t('home.steps.step2.desc', 'Informations simples et rapides') 
+      description: t('home.steps.step2.desc', 'Informations simples et rapides en quelques minutes') 
     },
     { 
       number: "03", 
-      title: t('home.steps.step3.title', 'Validation & paiement'), 
-      description: t('home.steps.step3.desc', 'Tarifs adaptés selon votre région') 
+      title: t('home.steps.step3.title', 'Recevez votre devis personnalisé'), 
+      description: t('home.steps.step3.desc', 'Un devis adapté à votre situation vous est transmis') 
     },
     { 
       number: "04", 
       title: t('home.steps.step4.title', 'Suivi jusqu\'à tous vos documents'), 
-      description: t('home.steps.step4.desc', 'Suivi personnalisé') 
+      description: t('home.steps.step4.desc', 'Suivi personnalisé en temps réel') 
     },
   ];
 
@@ -108,10 +106,12 @@ const Index = () => {
     },
   ];
 
-  // Format price with thousands separator
-  const formatPrice = (price: number) => {
-    return price.toLocaleString('fr-FR');
-  };
+  const advantages = [
+    { icon: Zap, title: "100% en ligne", desc: "Pas besoin de vous déplacer" },
+    { icon: Clock, title: "Rapide & efficace", desc: "Délais optimisés" },
+    { icon: Shield, title: "Sécurisé", desc: "Paiement et données protégés" },
+    { icon: HeadphonesIcon, title: "Support dédié", desc: "Équipe réactive à votre écoute" },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -147,7 +147,7 @@ const Index = () => {
                 {t('home.hero.subtitle', 'Créer, gérer et accompagner votre entreprise en Côte d\'Ivoire et partout dans le monde.')}
               </p>
               
-              {/* Referral promo banner */}
+              {/* Value proposition banner */}
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-6 border border-white/20 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-200">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-accent rounded-lg">
@@ -156,7 +156,7 @@ const Index = () => {
                   <div>
                     <p className="text-white font-semibold text-sm">Programme Parrainage</p>
                     <p className="text-white/80 text-xs">
-                      Gagnez {formatPrice(settings.pricing.referral_bonus)} FCFA en parrainant un proche. Votre filleul bénéficie aussi de -{formatPrice(settings.pricing.referral_bonus)} FCFA !
+                      Parrainez un proche et bénéficiez tous les deux d'avantages exclusifs sur votre dossier !
                     </p>
                   </div>
                 </div>
@@ -176,16 +176,20 @@ const Index = () => {
                 </Link>
               </div>
               
-              {/* Pricing highlight - Dynamic from settings */}
+              {/* Advantages highlights - replacing prices */}
               <div className="mt-8 flex flex-wrap gap-4 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-400">
-                <div className="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2 border border-white/20">
-                  <p className="text-white/80 text-xs">Abidjan</p>
-                  <p className="text-white font-bold">{formatPrice(settings.pricing.abidjan)} FCFA</p>
-                </div>
-                <div className="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2 border border-white/20">
-                  <p className="text-white/80 text-xs">Intérieur du pays</p>
-                  <p className="text-white font-bold">À partir de {formatPrice(settings.pricing.interior)} FCFA</p>
-                </div>
+                {advantages.map((adv, i) => {
+                  const Icon = adv.icon;
+                  return (
+                    <div key={i} className="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2 border border-white/20 flex items-center gap-2">
+                      <Icon className="h-4 w-4 text-accent" />
+                      <div>
+                        <p className="text-white font-semibold text-xs">{adv.title}</p>
+                        <p className="text-white/70 text-[10px]">{adv.desc}</p>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
             

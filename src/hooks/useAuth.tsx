@@ -206,16 +206,14 @@ export const useAuth = () => {
         
         console.log('[useAuth] User role determined:', role);
         
-        // Use setTimeout to ensure state is set before navigation
-        setTimeout(() => {
-          if (role === 'admin' || role === 'team') {
-            console.log('[useAuth] Navigating to admin dashboard');
-            navigate('/admin/dashboard', { replace: true });
-          } else {
-            console.log('[useAuth] Navigating to client dashboard');
-            navigate('/client/dashboard', { replace: true });
-          }
-        }, 100);
+        // Navigate immediately based on role - no setTimeout needed
+        if (role === 'admin' || role === 'team') {
+          console.log('[useAuth] Navigating to admin dashboard');
+          navigate('/admin/dashboard', { replace: true });
+        } else {
+          console.log('[useAuth] Navigating to client dashboard');
+          navigate('/client/dashboard', { replace: true });
+        }
       }
       
       return { error: null };
