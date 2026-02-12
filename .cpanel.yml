@@ -1,6 +1,7 @@
+---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home3/legalfor/public_html
-    - /usr/bin/npm install
-    - /usr/bin/npm run build
+    - export DEPLOYPATH=/home3/legalfor/public_html/
+    - /usr/bin/env npm install
+    - /usr/bin/env npm run build
     - /bin/cp -R dist/* $DEPLOYPATH
