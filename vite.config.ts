@@ -3,8 +3,7 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
-// Build version: v3.0.0 - Fix React duplication
-// https://vitejs.dev/config/
+// Build version: v4.0.0 - Fix React duplication definitively
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
@@ -16,11 +15,30 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
       "react": path.resolve(__dirname, "./node_modules/react"),
       "react-dom": path.resolve(__dirname, "./node_modules/react-dom"),
+      "react/jsx-runtime": path.resolve(__dirname, "./node_modules/react/jsx-runtime"),
+      "react/jsx-dev-runtime": path.resolve(__dirname, "./node_modules/react/jsx-dev-runtime"),
     },
-    dedupe: ["react", "react-dom", "react/jsx-runtime", "@radix-ui/react-tooltip", "@radix-ui/react-primitive"],
+    dedupe: [
+      "react",
+      "react-dom",
+      "react/jsx-runtime",
+      "react/jsx-dev-runtime",
+      "@tanstack/react-query",
+      "@radix-ui/react-tooltip",
+      "@radix-ui/react-primitive",
+      "@radix-ui/react-context",
+      "@radix-ui/react-compose-refs",
+    ],
   },
   optimizeDeps: {
-    include: ["react", "react-dom", "react/jsx-runtime", "@radix-ui/react-tooltip"],
+    include: [
+      "react",
+      "react-dom",
+      "react/jsx-runtime",
+      "react/jsx-dev-runtime",
+      "@tanstack/react-query",
+      "@radix-ui/react-tooltip",
+    ],
     force: true,
   },
   build: {

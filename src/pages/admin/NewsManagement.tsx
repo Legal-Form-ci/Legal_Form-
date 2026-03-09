@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,39 +12,17 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import AIContentGenerator from "@/components/AIContentGenerator";
 import ReactMarkdown from "react-markdown";
-import { 
-  Plus, 
-  Edit2, 
-  Trash2, 
-  Eye, 
-  Image as ImageIcon, 
-  Save,
-  Bold,
-  Italic,
-  List,
-  Heading,
-  Heading1,
-  Heading2,
-  Heading3,
-  Link as LinkIcon,
-  Newspaper,
-  Quote,
-  Code,
-  Table as TableIcon,
-  AlignLeft,
-  AlignCenter,
-  ListOrdered,
-  Minus,
-  Palette,
-  Undo,
-  Redo,
-  ChevronLeft,
-  ChevronRight
+import rehypeRaw from "rehype-raw";
+import {
+  Plus, Edit2, Trash2, Eye, Save, Sparkles, Loader2, ImageIcon, Newspaper,
+  Bold, Italic, Heading1, Heading2, Heading3, List, ListOrdered, Quote,
+  AlignLeft, AlignCenter, Minus, Undo, Redo, ChevronLeft, ChevronRight,
+  Table as TableIcon, Palette, Link as LinkIcon, Upload, X, Wand2
 } from "lucide-react";
 
 interface BlogPost {
@@ -63,7 +41,8 @@ interface BlogPost {
   created_at: string;
 }
 
-const ITEMS_PER_PAGE = 10;
+const CATEGORIES = ["Fiscalité", "Juridique", "Entrepreneuriat", "Actualités", "Formation", "Conseils", "Financement", "Innovation"];
+const ITEMS_PER_PAGE = 8;
 
 const NewsManagement = () => {
   const { t } = useTranslation();
@@ -76,13 +55,17 @@ const NewsManagement = () => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
-  const [uploading, setUploading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [editorTab, setEditorTab] = useState<"write" | "preview">("write");
+  const [previewMode, setPreviewMode] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatingImage, setGeneratingImage] = useState(false);
+  const [showGenerateOptions, setShowGenerateOptions] = useState(false);
+
+  // Undo/redo
   const [undoStack, setUndoStack] = useState<string[]>([]);
   const [redoStack, setRedoStack] = useState<string[]>([]);
 
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
     title: "",
     slug: "",
     excerpt: "",
@@ -91,771 +74,553 @@ const NewsManagement = () => {
     category: "",
     tags: "",
     is_published: false,
-    author_name: ""
+    author_name: "Legal Form",
   });
 
   useEffect(() => {
-    if (!authLoading && (!user || userRole !== 'admin')) {
-      navigate("/auth");
-    }
-  }, [user, userRole, authLoading, navigate]);
+    if (!authLoading && userRole !== "admin") navigate("/auth");
+  }, [userRole, authLoading]);
 
-  useEffect(() => {
-    fetchPosts();
-  }, []);
+  useEffect(() => { fetchPosts(); }, []);
 
   const fetchPosts = async () => {
-    const { data, error } = await supabase
-      .from('blog_posts')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (!error && data) {
-      setPosts(data);
-    }
-    setLoading(false);
-  };
-
-  // Pagination
-  const totalPages = Math.ceil(posts.length / ITEMS_PER_PAGE);
-  const paginatedPosts = posts.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
-
-  const generateSlug = (title: string) => {
-    return title
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)+/g, "");
-  };
-
-  const handleTitleChange = (value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      title: value,
-      slug: generateSlug(value)
-    }));
-  };
-
-  const handleContentChange = (newContent: string) => {
-    // Save to undo stack
-    setUndoStack(prev => [...prev.slice(-20), formData.content]);
-    setRedoStack([]);
-    setFormData(prev => ({ ...prev, content: newContent }));
-  };
-
-  const handleUndo = () => {
-    if (undoStack.length > 0) {
-      const previousContent = undoStack[undoStack.length - 1];
-      setUndoStack(prev => prev.slice(0, -1));
-      setRedoStack(prev => [...prev, formData.content]);
-      setFormData(prev => ({ ...prev, content: previousContent }));
-    }
-  };
-
-  const handleRedo = () => {
-    if (redoStack.length > 0) {
-      const nextContent = redoStack[redoStack.length - 1];
-      setRedoStack(prev => prev.slice(0, -1));
-      setUndoStack(prev => [...prev, formData.content]);
-      setFormData(prev => ({ ...prev, content: nextContent }));
-    }
-  };
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    setUploading(true);
-    const uploadedUrls: string[] = [];
-
     try {
-      for (const file of Array.from(files)) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-        const filePath = `blog/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('company-logos')
-          .upload(filePath, file, { upsert: true });
-
-        if (uploadError) throw uploadError;
-
-        const { data: urlData } = supabase.storage
-          .from('company-logos')
-          .getPublicUrl(filePath);
-
-        uploadedUrls.push(urlData.publicUrl);
-      }
-
-      // If single image, set as cover
-      if (uploadedUrls.length === 1) {
-        setFormData(prev => ({ ...prev, cover_image: uploadedUrls[0] }));
-      } else {
-        // Insert images into content
-        const imageMarkdown = uploadedUrls.map(url => `![Image](${url})`).join('\n\n');
-        handleContentChange(formData.content + '\n\n' + imageMarkdown);
-        if (!formData.cover_image) {
-          setFormData(prev => ({ ...prev, cover_image: uploadedUrls[0] }));
-        }
-      }
-
-      toast({ title: t('admin.uploadSuccess', 'Images téléchargées avec succès') });
+      const { data, error } = await supabase
+        .from("blog_posts")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      setPosts(data || []);
     } catch (error: any) {
-      toast({ 
-        title: t('admin.error', 'Erreur'), 
-        description: error.message, 
-        variant: "destructive" 
-      });
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } finally {
-      setUploading(false);
+      setLoading(false);
     }
   };
 
-  const insertFormatting = (type: string, extraData?: string) => {
-    const textarea = contentRef.current;
-    if (!textarea) return;
+  const generateSlug = (title: string) =>
+    title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = formData.content.substring(start, end);
+  const pushUndo = useCallback(() => {
+    setUndoStack(prev => [...prev.slice(-20), form.content]);
+    setRedoStack([]);
+  }, [form.content]);
 
-    let newText = "";
-    let cursorOffset = 0;
+  const undo = () => {
+    if (undoStack.length === 0) return;
+    const prev = undoStack[undoStack.length - 1];
+    setRedoStack(r => [...r, form.content]);
+    setUndoStack(u => u.slice(0, -1));
+    setForm(f => ({ ...f, content: prev }));
+  };
 
-    switch (type) {
-      case 'bold':
-        newText = `**${selectedText || 'texte en gras'}**`;
-        cursorOffset = selectedText ? 0 : -2;
-        break;
-      case 'italic':
-        newText = `*${selectedText || 'texte en italique'}*`;
-        cursorOffset = selectedText ? 0 : -1;
-        break;
-      case 'h1':
-        newText = `\n# ${selectedText || 'Titre principal'}\n`;
-        break;
-      case 'h2':
-        newText = `\n## ${selectedText || 'Sous-titre'}\n`;
-        break;
-      case 'h3':
-        newText = `\n### ${selectedText || 'Section'}\n`;
-        break;
-      case 'list':
-        newText = `\n- ${selectedText || 'élément de liste'}\n- élément 2\n- élément 3`;
-        break;
-      case 'numbered':
-        newText = `\n1. ${selectedText || 'premier élément'}\n2. deuxième élément\n3. troisième élément`;
-        break;
-      case 'link':
-        newText = `[${selectedText || 'texte du lien'}](https://url.com)`;
-        break;
-      case 'quote':
-        newText = `\n> ${selectedText || 'Citation importante'}\n`;
-        break;
-      case 'code':
-        newText = selectedText.includes('\n') 
-          ? `\n\`\`\`\n${selectedText || 'code'}\n\`\`\`\n`
-          : `\`${selectedText || 'code'}\``;
-        break;
-      case 'table':
-        newText = `\n| Colonne 1 | Colonne 2 | Colonne 3 |\n|-----------|-----------|----------|\n| Données 1 | Données 2 | Données 3 |\n| Données 4 | Données 5 | Données 6 |\n`;
-        break;
-      case 'hr':
-        newText = `\n---\n`;
-        break;
-      case 'color':
-        // Color is applied via custom span (rendered in preview)
-        newText = `<span style="color:${extraData || '#008080'}">${selectedText || 'texte coloré'}</span>`;
-        break;
-      case 'center':
-        newText = `<div style="text-align:center">\n\n${selectedText || 'Texte centré'}\n\n</div>`;
-        break;
-    }
+  const redo = () => {
+    if (redoStack.length === 0) return;
+    const next = redoStack[redoStack.length - 1];
+    setUndoStack(u => [...u, form.content]);
+    setRedoStack(r => r.slice(0, -1));
+    setForm(f => ({ ...f, content: next }));
+  };
 
-    const before = formData.content.substring(0, start);
-    const after = formData.content.substring(end);
-    handleContentChange(before + newText + after);
-
-    // Focus and set cursor position
+  const insertAtCursor = (before: string, after: string = "") => {
+    pushUndo();
+    const ta = contentRef.current;
+    if (!ta) return;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    const selected = form.content.substring(start, end);
+    const newContent = form.content.substring(0, start) + before + selected + after + form.content.substring(end);
+    setForm(f => ({ ...f, content: newContent }));
     setTimeout(() => {
-      if (textarea) {
-        textarea.focus();
-        const newPos = start + newText.length + cursorOffset;
-        textarea.setSelectionRange(newPos, newPos);
-      }
+      ta.focus();
+      ta.selectionStart = start + before.length;
+      ta.selectionEnd = start + before.length + selected.length;
     }, 0);
   };
 
-  const handleSubmit = async () => {
-    if (!formData.title || !formData.content) {
-      toast({ 
-        title: t('admin.error', 'Erreur'), 
-        description: t('admin.fillRequired', 'Veuillez remplir les champs obligatoires'),
-        variant: "destructive" 
-      });
+  // AI Generation with options
+  const handleGenerate = async (withImage: boolean) => {
+    setShowGenerateOptions(false);
+    if (!form.content.trim()) {
+      toast({ title: "Contenu requis", description: "Saisissez au moins quelques mots", variant: "destructive" });
       return;
     }
 
-    const tagsArray = formData.tags
-      .split(',')
-      .map(tag => tag.trim())
-      .filter(tag => tag.length > 0);
+    setIsGenerating(true);
+    if (withImage) setGeneratingImage(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-content-generator", {
+        body: { content: form.content, mode: "article", generateImage: withImage },
+      });
+
+      if (error) throw error;
+
+      if (data) {
+        pushUndo();
+        setForm(f => ({
+          ...f,
+          title: data.title || f.title,
+          slug: generateSlug(data.title || f.title),
+          excerpt: data.excerpt || f.excerpt,
+          category: data.category || f.category,
+          tags: (data.tags || []).join(", "),
+          content: data.formattedContent || f.content,
+          cover_image: data.generatedImage || f.cover_image,
+        }));
+        toast({ title: "✨ Contenu généré", description: "L'IA a enrichi votre article avec succès" });
+      }
+    } catch (error: any) {
+      console.error("AI generation error:", error);
+      toast({ title: "Erreur", description: error.message || "Impossible de générer", variant: "destructive" });
+    } finally {
+      setIsGenerating(false);
+      setGeneratingImage(false);
+    }
+  };
+
+  const savePost = async () => {
+    if (!form.title || !form.content) {
+      toast({ title: "Champs requis", description: "Titre et contenu sont obligatoires", variant: "destructive" });
+      return;
+    }
+
+    const slug = form.slug || generateSlug(form.title);
+    const tags = form.tags.split(",").map(t => t.trim()).filter(Boolean);
 
     const postData = {
-      title: formData.title,
-      slug: formData.slug || generateSlug(formData.title),
-      excerpt: formData.excerpt || formData.content.substring(0, 200).replace(/[#*_`]/g, '') + '...',
-      content: formData.content,
-      cover_image: formData.cover_image || null,
-      category: formData.category || null,
-      tags: tagsArray.length > 0 ? tagsArray : null,
-      is_published: formData.is_published,
-      published_at: formData.is_published ? new Date().toISOString() : null,
-      author_name: formData.author_name || 'Legal Form'
+      title: form.title,
+      slug,
+      excerpt: form.excerpt,
+      content: form.content,
+      cover_image: form.cover_image,
+      category: form.category,
+      tags,
+      is_published: form.is_published,
+      published_at: form.is_published ? new Date().toISOString() : null,
+      author_name: form.author_name,
+      author_id: user?.id,
     };
 
     try {
       if (editingPost) {
-        const { error } = await supabase
-          .from('blog_posts')
-          .update(postData)
-          .eq('id', editingPost.id);
-
+        const { error } = await supabase.from("blog_posts").update(postData).eq("id", editingPost.id);
         if (error) throw error;
-        toast({ title: t('admin.articleUpdated', 'Article mis à jour') });
+        toast({ title: "Article mis à jour" });
       } else {
-        const { error } = await supabase
-          .from('blog_posts')
-          .insert(postData);
-
+        const { error } = await supabase.from("blog_posts").insert(postData);
         if (error) throw error;
-        toast({ title: t('admin.articleCreated', 'Article créé') });
+        toast({ title: "Article créé" });
       }
-
       setDialogOpen(false);
       resetForm();
       fetchPosts();
     } catch (error: any) {
-      toast({ 
-        title: t('admin.error', 'Erreur'), 
-        description: error.message, 
-        variant: "destructive" 
-      });
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
     }
   };
 
-  const handleEdit = (post: BlogPost) => {
+  const deletePost = async (id: string) => {
+    if (!confirm("Supprimer cet article ?")) return;
+    try {
+      const { error } = await supabase.from("blog_posts").delete().eq("id", id);
+      if (error) throw error;
+      toast({ title: "Article supprimé" });
+      fetchPosts();
+    } catch (error: any) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const resetForm = () => {
+    setForm({ title: "", slug: "", excerpt: "", content: "", cover_image: "", category: "", tags: "", is_published: false, author_name: "Legal Form" });
+    setEditingPost(null);
+    setPreviewMode(false);
+    setUndoStack([]);
+    setRedoStack([]);
+  };
+
+  const openEdit = (post: BlogPost) => {
     setEditingPost(post);
-    setFormData({
+    setForm({
       title: post.title,
       slug: post.slug,
       excerpt: post.excerpt || "",
       content: post.content,
       cover_image: post.cover_image || "",
       category: post.category || "",
-      tags: post.tags?.join(', ') || "",
+      tags: (post.tags || []).join(", "),
       is_published: post.is_published || false,
-      author_name: post.author_name || ""
+      author_name: post.author_name || "Legal Form",
     });
-    setUndoStack([]);
-    setRedoStack([]);
     setDialogOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm(t('admin.confirmDelete', 'Êtes-vous sûr de vouloir supprimer cet article ?'))) return;
+  const totalPages = Math.ceil(posts.length / ITEMS_PER_PAGE);
+  const paginatedPosts = posts.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
-    const { error } = await supabase
-      .from('blog_posts')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      toast({ 
-        title: t('admin.error', 'Erreur'), 
-        description: error.message, 
-        variant: "destructive" 
-      });
-    } else {
-      toast({ title: t('admin.articleDeleted', 'Article supprimé') });
-      fetchPosts();
-    }
-  };
-
-  const resetForm = () => {
-    setEditingPost(null);
-    setFormData({
-      title: "",
-      slug: "",
-      excerpt: "",
-      content: "",
-      cover_image: "",
-      category: "",
-      tags: "",
-      is_published: false,
-      author_name: ""
-    });
-    setUndoStack([]);
-    setRedoStack([]);
-    setEditorTab("write");
-  };
-
-  if (authLoading) {
-    return (
-      <AdminLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-        </div>
-      </AdminLayout>
-    );
-  }
-
-  const colorOptions = ['#008080', '#e74c3c', '#3498db', '#27ae60', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22'];
+  // Toolbar buttons
+  const toolbarButtons = [
+    { icon: Bold, action: () => insertAtCursor("**", "**"), title: "Gras" },
+    { icon: Italic, action: () => insertAtCursor("*", "*"), title: "Italique" },
+    { icon: Heading1, action: () => insertAtCursor("\n# ", "\n"), title: "Titre 1" },
+    { icon: Heading2, action: () => insertAtCursor("\n## ", "\n"), title: "Titre 2" },
+    { icon: Heading3, action: () => insertAtCursor("\n### ", "\n"), title: "Titre 3" },
+    { icon: List, action: () => insertAtCursor("\n- ", "\n"), title: "Liste" },
+    { icon: ListOrdered, action: () => insertAtCursor("\n1. ", "\n"), title: "Liste numérotée" },
+    { icon: Quote, action: () => insertAtCursor("\n> ", "\n"), title: "Citation" },
+    { icon: Minus, action: () => insertAtCursor("\n---\n"), title: "Séparateur" },
+    { icon: LinkIcon, action: () => insertAtCursor("[", "](url)"), title: "Lien" },
+    { icon: TableIcon, action: () => insertAtCursor("\n| Colonne 1 | Colonne 2 | Colonne 3 |\n|---|---|---|\n| ", " | | |\n"), title: "Tableau" },
+  ];
 
   return (
     <AdminLayout>
       <div className="space-y-6">
+        {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-white">{t('admin.newsManagement', 'Gestion des Actualités')}</h1>
-            <p className="text-slate-400 mt-1">{t('admin.newsDesc', 'Créez et gérez les articles d\'actualité')}</p>
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+              <Newspaper className="h-6 w-6 text-primary" />
+              Gestion des Actualités
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              {posts.length} article{posts.length !== 1 ? "s" : ""} • Éditeur assisté par IA
+            </p>
           </div>
-          <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
-            <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90">
-                <Plus className="mr-2 h-4 w-4" />
-                {t('admin.newArticle', 'Nouvel article')}
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Newspaper className="h-5 w-5 text-primary" />
-                  {editingPost ? t('admin.editArticle', 'Modifier l\'article') : t('admin.newArticle', 'Nouvel article')}
-                </DialogTitle>
-              </DialogHeader>
-              
-              <div className="space-y-4 py-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="title">{t('admin.title', 'Titre')} *</Label>
-                    <Input
-                      id="title"
-                      value={formData.title}
-                      onChange={(e) => handleTitleChange(e.target.value)}
-                      placeholder={t('admin.titlePlaceholder', 'Titre de l\'article')}
-                      className="text-lg font-semibold"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="slug">{t('admin.slug', 'Slug URL')}</Label>
-                    <Input
-                      id="slug"
-                      value={formData.slug}
-                      onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
-                      placeholder="titre-de-l-article"
-                    />
-                  </div>
-                </div>
+          <Button onClick={() => { resetForm(); setDialogOpen(true); }} className="gap-2">
+            <Plus className="h-4 w-4" /> Nouvel article
+          </Button>
+        </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="category">{t('admin.category', 'Catégorie')}</Label>
-                    <Input
-                      id="category"
-                      value={formData.category}
-                      onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                      placeholder="Fiscalité, Juridique, etc."
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="author">{t('admin.author', 'Auteur')}</Label>
-                    <Input
-                      id="author"
-                      value={formData.author_name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, author_name: e.target.value }))}
-                      placeholder="Legal Form"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="tags">{t('admin.tags', 'Tags')}</Label>
-                    <Input
-                      id="tags"
-                      value={formData.tags}
-                      onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value }))}
-                      placeholder="fiscalité, entreprise"
-                    />
-                  </div>
-                </div>
+        {/* Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { label: "Total", value: posts.length, color: "text-primary" },
+            { label: "Publiés", value: posts.filter(p => p.is_published).length, color: "text-green-600" },
+            { label: "Brouillons", value: posts.filter(p => !p.is_published).length, color: "text-amber-600" },
+            { label: "Vues totales", value: posts.reduce((sum, p) => sum + (p.views_count || 0), 0), color: "text-blue-600" },
+          ].map((stat, i) => (
+            <Card key={i}>
+              <CardContent className="p-4 text-center">
+                <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+                <p className="text-xs text-muted-foreground">{stat.label}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="excerpt">{t('admin.excerpt', 'Résumé')}</Label>
-                  <Textarea
-                    id="excerpt"
-                    value={formData.excerpt}
-                    onChange={(e) => setFormData(prev => ({ ...prev, excerpt: e.target.value }))}
-                    placeholder={t('admin.excerptPlaceholder', 'Bref résumé de l\'article')}
-                    rows={2}
-                  />
-                </div>
+        {/* Posts list */}
+        <Card>
+          <CardContent className="p-0">
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : posts.length === 0 ? (
+              <div className="text-center py-12">
+                <Newspaper className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">Aucun article. Créez votre premier !</p>
+              </div>
+            ) : (
+              <>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Article</TableHead>
+                      <TableHead className="hidden md:table-cell">Catégorie</TableHead>
+                      <TableHead className="hidden md:table-cell">Statut</TableHead>
+                      <TableHead className="hidden md:table-cell">Vues</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedPosts.map(post => (
+                      <TableRow key={post.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            {post.cover_image && (
+                              <img src={post.cover_image} alt="" className="w-12 h-12 rounded-lg object-cover hidden sm:block" />
+                            )}
+                            <div>
+                              <p className="font-medium text-foreground line-clamp-1">{post.title}</p>
+                              <p className="text-xs text-muted-foreground line-clamp-1">{post.excerpt}</p>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <Badge variant="secondary">{post.category || "—"}</Badge>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <Badge variant={post.is_published ? "default" : "outline"}>
+                            {post.is_published ? "Publié" : "Brouillon"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">{post.views_count || 0}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex gap-1 justify-end">
+                            <Button size="icon" variant="ghost" onClick={() => openEdit(post)}>
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="text-destructive" onClick={() => deletePost(post.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
 
-                {/* Advanced Rich Text Editor */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label>{t('admin.content', 'Contenu')} *</Label>
-                    <div className="flex items-center gap-2">
-                      <Button type="button" size="sm" variant="ghost" onClick={handleUndo} disabled={undoStack.length === 0}>
-                        <Undo className="h-4 w-4" />
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-2 py-4 border-t">
+                    <Button size="sm" variant="outline" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    {Array.from({ length: totalPages }, (_, i) => (
+                      <Button key={i} size="sm" variant={currentPage === i + 1 ? "default" : "outline"} onClick={() => setCurrentPage(i + 1)}>
+                        {i + 1}
                       </Button>
-                      <Button type="button" size="sm" variant="ghost" onClick={handleRedo} disabled={redoStack.length === 0}>
-                        <Redo className="h-4 w-4" />
+                    ))}
+                    <Button size="sm" variant="outline" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Editor Dialog */}
+        <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setDialogOpen(open); }}>
+          <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Newspaper className="h-5 w-5 text-primary" />
+                {editingPost ? "Modifier l'article" : "Nouvel article"}
+              </DialogTitle>
+              <DialogDescription>
+                Saisissez votre contenu et laissez l'IA l'enrichir automatiquement
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              {/* AI Generator Section */}
+              <Card className="border-primary/30 bg-primary/5">
+                <CardContent className="p-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <Wand2 className="h-5 w-5 text-primary" />
+                      <div>
+                        <p className="font-medium text-sm">Assistant IA</p>
+                        <p className="text-xs text-muted-foreground">Saisissez du texte ci-dessous, même minimal, puis cliquez sur Générer</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => setShowGenerateOptions(true)}
+                        disabled={isGenerating || !form.content.trim()}
+                        className="gap-2"
+                      >
+                        {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                        {isGenerating ? "Génération..." : "Générer"}
                       </Button>
                     </div>
                   </div>
-                  
-                  {/* Toolbar */}
-                  <div className="flex flex-wrap gap-1 p-2 border rounded-t-md bg-muted">
-                    {/* Text formatting */}
-                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('bold')} title="Gras">
-                      <Bold className="h-4 w-4" />
+                </CardContent>
+              </Card>
+
+              {/* Generate Options Popup */}
+              <Dialog open={showGenerateOptions} onOpenChange={setShowGenerateOptions}>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Sparkles className="h-5 w-5 text-primary" />
+                      Type de génération
+                    </DialogTitle>
+                    <DialogDescription>
+                      Choisissez le format de publication souhaité
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-3">
+                    <Button variant="outline" className="w-full justify-start gap-3 h-auto py-3" onClick={() => handleGenerate(true)}>
+                      <ImageIcon className="h-5 w-5 text-primary flex-shrink-0" />
+                      <div className="text-left">
+                        <p className="font-medium">Article avec image IA</p>
+                        <p className="text-xs text-muted-foreground">L'IA génère le contenu + une image de couverture</p>
+                      </div>
                     </Button>
-                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('italic')} title="Italique">
-                      <Italic className="h-4 w-4" />
+                    <Button variant="outline" className="w-full justify-start gap-3 h-auto py-3" onClick={() => handleGenerate(false)}>
+                      <Newspaper className="h-5 w-5 text-primary flex-shrink-0" />
+                      <div className="text-left">
+                        <p className="font-medium">Article texte uniquement</p>
+                        <p className="text-xs text-muted-foreground">L'IA structure et enrichit le contenu</p>
+                      </div>
                     </Button>
-                    <div className="w-px h-6 bg-border mx-1" />
-                    
-                    {/* Headings */}
-                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('h1')} title="Titre H1">
-                      <Heading1 className="h-4 w-4" />
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              {/* Title & Metadata */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Titre</Label>
+                  <Input
+                    id="title"
+                    value={form.title}
+                    onChange={e => setForm(f => ({ ...f, title: e.target.value, slug: generateSlug(e.target.value) }))}
+                    placeholder="Titre de l'article"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Catégorie</Label>
+                  <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="excerpt">Résumé</Label>
+                <Textarea
+                  id="excerpt"
+                  value={form.excerpt}
+                  onChange={e => setForm(f => ({ ...f, excerpt: e.target.value }))}
+                  placeholder="Résumé court de l'article"
+                  rows={2}
+                />
+              </div>
+
+              {/* Cover Image */}
+              {form.cover_image && (
+                <div className="space-y-2">
+                  <Label>Image de couverture</Label>
+                  <div className="relative inline-block">
+                    <img src={form.cover_image} alt="Cover" className="w-full max-h-48 object-cover rounded-lg" />
+                    <Button
+                      size="icon"
+                      variant="destructive"
+                      className="absolute top-2 right-2 h-6 w-6"
+                      onClick={() => setForm(f => ({ ...f, cover_image: "" }))}
+                    >
+                      <X className="h-3 w-3" />
                     </Button>
-                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('h2')} title="Titre H2">
-                      <Heading2 className="h-4 w-4" />
+                    {generatingImage && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
+                        <Loader2 className="h-8 w-8 animate-spin text-white" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Editor with toolbar */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Contenu</Label>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" variant={previewMode ? "outline" : "default"} onClick={() => setPreviewMode(false)}>
+                      <Edit2 className="h-3 w-3 mr-1" /> Éditeur
                     </Button>
-                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('h3')} title="Titre H3">
-                      <Heading3 className="h-4 w-4" />
+                    <Button size="sm" variant={previewMode ? "default" : "outline"} onClick={() => setPreviewMode(true)}>
+                      <Eye className="h-3 w-3 mr-1" /> Aperçu
                     </Button>
-                    <div className="w-px h-6 bg-border mx-1" />
-                    
-                    {/* Lists */}
-                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('list')} title="Liste à puces">
-                      <List className="h-4 w-4" />
-                    </Button>
-                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('numbered')} title="Liste numérotée">
-                      <ListOrdered className="h-4 w-4" />
-                    </Button>
-                    <div className="w-px h-6 bg-border mx-1" />
-                    
-                    {/* Advanced */}
-                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('quote')} title="Citation">
-                      <Quote className="h-4 w-4" />
-                    </Button>
-                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('code')} title="Code">
-                      <Code className="h-4 w-4" />
-                    </Button>
-                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('link')} title="Lien">
-                      <LinkIcon className="h-4 w-4" />
-                    </Button>
-                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('table')} title="Tableau">
-                      <TableIcon className="h-4 w-4" />
-                    </Button>
-                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('hr')} title="Ligne horizontale">
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                    <div className="w-px h-6 bg-border mx-1" />
-                    
-                    {/* Colors */}
-                    <div className="relative group">
-                      <Button type="button" size="sm" variant="ghost" title="Couleur du texte">
-                        <Palette className="h-4 w-4" />
+                  </div>
+                </div>
+
+                {!previewMode && (
+                  <div className="flex flex-wrap gap-1 p-2 bg-muted rounded-t-lg border border-b-0">
+                    {toolbarButtons.map((btn, i) => (
+                      <Button key={i} size="icon" variant="ghost" className="h-8 w-8" onClick={btn.action} title={btn.title}>
+                        <btn.icon className="h-4 w-4" />
                       </Button>
-                      <div className="absolute top-full left-0 mt-1 hidden group-hover:flex gap-1 p-2 bg-popover border rounded-md shadow-lg z-50">
-                        {colorOptions.map(color => (
-                          <button
-                            key={color}
-                            type="button"
-                            onClick={() => insertFormatting('color', color)}
-                            className="w-6 h-6 rounded-full border-2 border-white shadow-sm hover:scale-110 transition-transform"
-                            style={{ backgroundColor: color }}
-                            title={color}
-                          />
+                    ))}
+                    <div className="w-px bg-border mx-1" />
+                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={undo} disabled={undoStack.length === 0} title="Annuler">
+                      <Undo className="h-4 w-4" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={redo} disabled={redoStack.length === 0} title="Rétablir">
+                      <Redo className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+
+                {previewMode ? (
+                  <div className="border rounded-lg p-6 min-h-[300px] bg-white prose prose-sm max-w-none">
+                    {form.cover_image && (
+                      <img src={form.cover_image} alt={form.title} className="w-full max-h-64 object-cover rounded-lg mb-6" />
+                    )}
+                    {form.title && <h1 className="text-2xl font-bold mb-2">{form.title}</h1>}
+                    {form.excerpt && <p className="text-muted-foreground italic mb-4">{form.excerpt}</p>}
+                    {form.category && <Badge className="mb-4">{form.category}</Badge>}
+                    <ReactMarkdown rehypePlugins={[rehypeRaw]}>{form.content}</ReactMarkdown>
+                    {form.tags && (
+                      <div className="flex flex-wrap gap-2 mt-6 pt-4 border-t">
+                        {form.tags.split(",").filter(Boolean).map((tag, i) => (
+                          <span key={i} className="text-primary text-sm font-medium">#{tag.trim()}</span>
                         ))}
                       </div>
-                    </div>
-                    <Button type="button" size="sm" variant="ghost" onClick={() => insertFormatting('center')} title="Centrer">
-                      <AlignCenter className="h-4 w-4" />
-                    </Button>
-                    
-                    <div className="flex-1" />
-                    
-                    {/* Image upload */}
-                    <Label htmlFor="imageUpload" className="cursor-pointer">
-                      <Button type="button" size="sm" variant="outline" asChild disabled={uploading}>
-                        <span>
-                          <ImageIcon className="h-4 w-4 mr-1" />
-                          {uploading ? 'Upload...' : 'Images'}
-                        </span>
-                      </Button>
-                    </Label>
-                    <input
-                      id="imageUpload"
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      className="hidden"
-                      onChange={handleImageUpload}
-                    />
+                    )}
                   </div>
-                  
-                  {/* Editor with tabs */}
-                  <Tabs value={editorTab} onValueChange={(v) => setEditorTab(v as "write" | "preview")}>
-                    <TabsList className="w-full justify-start">
-                      <TabsTrigger value="write">Écrire</TabsTrigger>
-                      <TabsTrigger value="preview">Aperçu</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="write" className="mt-0">
-                      <Textarea
-                        ref={contentRef}
-                        value={formData.content}
-                        onChange={(e) => handleContentChange(e.target.value)}
-                        placeholder="Rédigez votre article ici... (Markdown et HTML supportés)"
-                        rows={16}
-                        className="rounded-t-none font-mono text-sm min-h-[400px]"
-                      />
-                    </TabsContent>
-                    <TabsContent value="preview" className="mt-0">
-                      <div className="border rounded-md p-4 min-h-[400px] max-h-[500px] overflow-y-auto prose prose-sm max-w-none dark:prose-invert">
-                        {formData.content ? (
-                          <ReactMarkdown
-                            components={{
-                              h1: ({children}) => <h1 className="text-3xl font-bold text-primary mb-4 mt-6">{children}</h1>,
-                              h2: ({children}) => <h2 className="text-2xl font-semibold text-foreground mb-3 mt-5">{children}</h2>,
-                              h3: ({children}) => <h3 className="text-xl font-medium text-foreground mb-2 mt-4">{children}</h3>,
-                              p: ({children}) => <p className="mb-4 leading-relaxed">{children}</p>,
-                              ul: ({children}) => <ul className="list-disc list-inside mb-4 space-y-1">{children}</ul>,
-                              ol: ({children}) => <ol className="list-decimal list-inside mb-4 space-y-1">{children}</ol>,
-                              blockquote: ({children}) => <blockquote className="border-l-4 border-primary pl-4 italic my-4 bg-muted/50 py-2">{children}</blockquote>,
-                              table: ({children}) => <table className="w-full border-collapse border my-4">{children}</table>,
-                              th: ({children}) => <th className="border p-2 bg-muted font-semibold text-left">{children}</th>,
-                              td: ({children}) => <td className="border p-2">{children}</td>,
-                              code: ({children, className}) => className ? (
-                                <pre className="bg-muted p-3 rounded-md overflow-x-auto my-4"><code className="text-sm">{children}</code></pre>
-                              ) : (
-                                <code className="bg-muted px-1 py-0.5 rounded text-sm">{children}</code>
-                              ),
-                              hr: () => <hr className="my-6 border-t-2 border-muted" />,
-                              a: ({href, children}) => <a href={href} className="text-primary underline hover:text-primary/80" target="_blank" rel="noopener noreferrer">{children}</a>,
-                              img: ({src, alt}) => <img src={src} alt={alt || ''} className="max-w-full h-auto rounded-lg my-4" />,
-                            }}
-                          >
-                            {formData.content}
-                          </ReactMarkdown>
-                        ) : (
-                          <p className="text-muted-foreground">L'aperçu apparaîtra ici...</p>
-                        )}
-                      </div>
-                    </TabsContent>
-                  </Tabs>
-                </div>
+                ) : (
+                  <Textarea
+                    ref={contentRef}
+                    value={form.content}
+                    onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
+                    placeholder="Saisissez votre contenu ici... L'IA se charge du reste ✨"
+                    className="min-h-[300px] font-mono text-sm rounded-t-none"
+                  />
+                )}
+              </div>
 
-                {/* AI Content Generator */}
-                <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-md border-2 border-dashed border-primary/30">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium flex items-center gap-2">
-                      ✨ Génération IA
-                    </p>
-                    <p className="text-xs text-muted-foreground">Écrivez votre contenu, puis cliquez sur Générer pour enrichir automatiquement</p>
-                  </div>
-                  <AIContentGenerator
-                    content={formData.content}
-                    onGenerate={(generated) => {
-                      setFormData(prev => ({
-                        ...prev,
-                        title: generated.title || prev.title,
-                        excerpt: generated.excerpt || prev.excerpt,
-                        category: generated.category || prev.category,
-                        content: generated.formattedContent || prev.content,
-                        slug: generateSlug(generated.title || prev.title),
-                      }));
-                    }}
-                    disabled={formData.content.length < 20}
+              {/* Tags & Options */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="tags">Tags (séparés par des virgules)</Label>
+                  <Input
+                    id="tags"
+                    value={form.tags}
+                    onChange={e => setForm(f => ({ ...f, tags: e.target.value }))}
+                    placeholder="entrepreneuriat, SARL, Côte d'Ivoire"
                   />
                 </div>
-
                 <div className="space-y-2">
-                  <Label htmlFor="cover">{t('admin.coverImage', 'Image de couverture')}</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="cover"
-                      value={formData.cover_image}
-                      onChange={(e) => setFormData(prev => ({ ...prev, cover_image: e.target.value }))}
-                      placeholder="https://..."
-                      className="flex-1"
-                    />
-                  </div>
-                  {formData.cover_image && (
-                    <img src={formData.cover_image} alt="Cover preview" className="h-32 object-cover rounded-md" />
-                  )}
+                  <Label htmlFor="author">Auteur</Label>
+                  <Input
+                    id="author"
+                    value={form.author_name}
+                    onChange={e => setForm(f => ({ ...f, author_name: e.target.value }))}
+                  />
                 </div>
+              </div>
 
-                <div className="flex items-center justify-between p-4 bg-muted rounded-md">
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={formData.is_published}
-                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_published: checked }))}
-                    />
-                    <Label>Publier immédiatement</Label>
-                  </div>
-                  <Button onClick={handleSubmit} className="bg-primary hover:bg-primary/90">
-                    <Save className="mr-2 h-4 w-4" />
-                    {editingPost ? 'Mettre à jour' : 'Enregistrer'}
+              <div className="flex items-center justify-between border-t pt-4">
+                <div className="flex items-center gap-3">
+                  <Switch
+                    checked={form.is_published}
+                    onCheckedChange={v => setForm(f => ({ ...f, is_published: v }))}
+                  />
+                  <Label>{form.is_published ? "Publié" : "Brouillon"}</Label>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => { resetForm(); setDialogOpen(false); }}>
+                    Annuler
+                  </Button>
+                  <Button onClick={savePost} className="gap-2">
+                    <Save className="h-4 w-4" />
+                    {editingPost ? "Mettre à jour" : "Enregistrer"}
                   </Button>
                 </div>
               </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        {/* Statistics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="bg-slate-800 border-slate-700">
-            <CardContent className="p-4">
-              <p className="text-slate-400 text-sm">Total articles</p>
-              <p className="text-2xl font-bold text-white">{posts.length}</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-slate-800 border-slate-700">
-            <CardContent className="p-4">
-              <p className="text-slate-400 text-sm">Publiés</p>
-              <p className="text-2xl font-bold text-green-400">{posts.filter(p => p.is_published).length}</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-slate-800 border-slate-700">
-            <CardContent className="p-4">
-              <p className="text-slate-400 text-sm">Brouillons</p>
-              <p className="text-2xl font-bold text-yellow-400">{posts.filter(p => !p.is_published).length}</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-slate-800 border-slate-700">
-            <CardContent className="p-4">
-              <p className="text-slate-400 text-sm">Vues totales</p>
-              <p className="text-2xl font-bold text-primary">{posts.reduce((acc, p) => acc + (p.views_count || 0), 0)}</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Articles Table */}
-        <Card className="bg-slate-800 border-slate-700">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center justify-between">
-              <span>Articles ({posts.length})</span>
-              {totalPages > 1 && (
-                <div className="flex items-center gap-2 text-sm font-normal">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="text-slate-400">
-                    Page {currentPage} / {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow className="border-slate-700">
-                  <TableHead className="text-slate-400">Image</TableHead>
-                  <TableHead className="text-slate-400">Titre</TableHead>
-                  <TableHead className="text-slate-400">Catégorie</TableHead>
-                  <TableHead className="text-slate-400">Statut</TableHead>
-                  <TableHead className="text-slate-400">Vues</TableHead>
-                  <TableHead className="text-slate-400">Date</TableHead>
-                  <TableHead className="text-slate-400">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center text-slate-400 py-8">
-                      Chargement...
-                    </TableCell>
-                  </TableRow>
-                ) : paginatedPosts.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center text-slate-400 py-8">
-                      Aucun article
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  paginatedPosts.map((post) => (
-                    <TableRow key={post.id} className="border-slate-700">
-                      <TableCell>
-                        {post.cover_image ? (
-                          <img src={post.cover_image} alt="" className="w-12 h-12 object-cover rounded" />
-                        ) : (
-                          <div className="w-12 h-12 bg-slate-700 rounded flex items-center justify-center">
-                            <Newspaper className="h-5 w-5 text-slate-500" />
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-white font-medium max-w-[200px] truncate">
-                        {post.title}
-                      </TableCell>
-                      <TableCell>
-                        {post.category && (
-                          <Badge variant="secondary" className="bg-primary/20 text-primary">
-                            {post.category}
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={post.is_published ? "default" : "secondary"} className={post.is_published ? "bg-green-500" : "bg-yellow-500"}>
-                          {post.is_published ? "Publié" : "Brouillon"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-slate-400">{post.views_count || 0}</TableCell>
-                      <TableCell className="text-slate-400">
-                        {new Date(post.created_at).toLocaleDateString('fr-FR')}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button size="icon" variant="ghost" onClick={() => handleEdit(post)}>
-                            <Edit2 className="h-4 w-4 text-blue-400" />
-                          </Button>
-                          <Button size="icon" variant="ghost" asChild>
-                            <a href={`/blog/${post.slug}`} target="_blank" rel="noopener noreferrer">
-                              <Eye className="h-4 w-4 text-green-400" />
-                            </a>
-                          </Button>
-                          <Button size="icon" variant="ghost" onClick={() => handleDelete(post.id)}>
-                            <Trash2 className="h-4 w-4 text-red-400" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );

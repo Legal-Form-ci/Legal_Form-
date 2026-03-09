@@ -1,14 +1,14 @@
-import * as React from "react";
+import React, { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { logPageView } from "@/utils/analytics";
-import { Analytics as VercelAnalytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/react";
 import LexIA from "@/components/LexIA";
 import ScrollToTop from "@/components/ScrollToTop";
+import WelcomePopup from "@/components/WelcomePopup";
+
+// Lazy load pages for better performance
 import Index from "./pages/Index";
 import Services from "./pages/Services";
 import Create from "./pages/Create";
@@ -60,104 +60,108 @@ import DatabaseManager from "./pages/admin/DatabaseManager";
 import ReferralWithdrawals from "./pages/admin/ReferralWithdrawals";
 import Documentation from "./pages/admin/Documentation";
 import FAQManagement from "./pages/admin/FAQManagement";
-import WelcomePopup from "./components/WelcomePopup";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 5 * 60 * 1000,
+    },
+  },
+});
 
-// Component to track page views
 const PageViewTracker = () => {
   const location = useLocation();
-
-  React.useEffect(() => {
+  useEffect(() => {
     logPageView(location.pathname + location.search);
   }, [location]);
-
   return null;
 };
 
+const AppRoutes = () => (
+  <>
+    <ScrollToTop />
+    <PageViewTracker />
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/services" element={<Services />} />
+      <Route path="/services/additional" element={<AdditionalServices />} />
+      <Route path="/service-request" element={<ServiceRequest />} />
+      <Route path="/create" element={<Create />} />
+      <Route path="/creer" element={<Create />} />
+      <Route path="/creation" element={<Create />} />
+      <Route path="/mon-entreprise" element={<Create />} />
+      <Route path="/regions" element={<Regions />} />
+      <Route path="/pricing" element={<Pricing />} />
+      <Route path="/tarifs" element={<Pricing />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/a-propos" element={<About />} />
+      <Route path="/contact" element={<Contact />} />
+      <Route path="/showcase" element={<Showcase />} />
+      <Route path="/entreprises-creees" element={<Showcase />} />
+      <Route path="/testimonials" element={<Testimonials />} />
+      <Route path="/temoignages" element={<Testimonials />} />
+      <Route path="/auth" element={<Auth />} />
+      <Route path="/connexion" element={<Auth />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/privacy" element={<Privacy />} />
+      <Route path="/confidentialite" element={<Privacy />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/conditions" element={<Terms />} />
+      <Route path="/admin/setup" element={<SetupSuperAdmin />} />
+      <Route path="/admin/initial-setup" element={<InitialSetup />} />
+      <Route path="/admin/dashboard" element={<NewDashboard />} />
+      <Route path="/admin/old-dashboard" element={<UnifiedDashboard />} />
+      <Route path="/admin/companies" element={<CompaniesManagement />} />
+      <Route path="/admin/company/:id" element={<CompanyDetail />} />
+      <Route path="/admin/team" element={<TeamManagement />} />
+      <Route path="/admin/settings" element={<AdminSettings />} />
+      <Route path="/admin/payments" element={<PaymentsDashboard />} />
+      <Route path="/admin/testimonials" element={<TestimonialsAdmin />} />
+      <Route path="/admin/users" element={<UsersManagement />} />
+      <Route path="/admin/tickets" element={<Tickets />} />
+      <Route path="/admin/analytics" element={<Analytics />} />
+      <Route path="/admin/lexia" element={<LexIAConversations />} />
+      <Route path="/admin/identity-documents" element={<IdentityDocuments />} />
+      <Route path="/admin/invoices" element={<InvoiceGenerator />} />
+      <Route path="/admin/services" element={<AdditionalServicesAdmin />} />
+      <Route path="/client/dashboard" element={<ClientDashboard />} />
+      <Route path="/mon-espace" element={<ClientDashboard />} />
+      <Route path="/request/:id" element={<RequestDetail />} />
+      <Route path="/tracking" element={<PublicTracking />} />
+      <Route path="/suivi" element={<PublicTracking />} />
+      <Route path="/payment/callback" element={<PaymentCallback />} />
+      <Route path="/payment/success" element={<PaymentCallback />} />
+      <Route path="/payment/failed" element={<PaymentCallback />} />
+      <Route path="/payment/:requestId" element={<Payment />} />
+      <Route path="/blog" element={<Blog />} />
+      <Route path="/blog/:slug" element={<BlogPost />} />
+      <Route path="/ebooks" element={<Ebooks />} />
+      <Route path="/ebook/:slug" element={<EbookDownload />} />
+      <Route path="/faq" element={<FAQ />} />
+      <Route path="/questions-frequentes" element={<FAQ />} />
+      <Route path="/actualites" element={<News />} />
+      <Route path="/news" element={<News />} />
+      <Route path="/admin/news" element={<NewsManagement />} />
+      <Route path="/admin/database" element={<DatabaseManager />} />
+      <Route path="/admin/referral-withdrawals" element={<ReferralWithdrawals />} />
+      <Route path="/admin/documentation" element={<Documentation />} />
+      <Route path="/admin/faq" element={<FAQManagement />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+    <Toaster />
+    <SonnerToaster />
+    <LexIA />
+    <WelcomePopup />
+  </>
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <BrowserRouter>
-        <ScrollToTop />
-        <PageViewTracker />
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/services" element={<Services />} />
-          <Route path="/services/additional" element={<AdditionalServices />} />
-          <Route path="/service-request" element={<ServiceRequest />} />
-          <Route path="/create" element={<Create />} />
-          <Route path="/creer" element={<Create />} />
-          <Route path="/creation" element={<Create />} />
-          <Route path="/mon-entreprise" element={<Create />} />
-          <Route path="/regions" element={<Regions />} />
-          <Route path="/pricing" element={<Pricing />} />
-          <Route path="/tarifs" element={<Pricing />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/a-propos" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/showcase" element={<Showcase />} />
-          <Route path="/entreprises-creees" element={<Showcase />} />
-          <Route path="/testimonials" element={<Testimonials />} />
-          <Route path="/temoignages" element={<Testimonials />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/connexion" element={<Auth />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/confidentialite" element={<Privacy />} />
-          <Route path="/terms" element={<Terms />} />
-          <Route path="/conditions" element={<Terms />} />
-          <Route path="/admin/setup" element={<SetupSuperAdmin />} />
-          <Route path="/admin/initial-setup" element={<InitialSetup />} />
-          <Route path="/admin/dashboard" element={<NewDashboard />} />
-          <Route path="/admin/old-dashboard" element={<UnifiedDashboard />} />
-          <Route path="/admin/companies" element={<CompaniesManagement />} />
-          <Route path="/admin/company/:id" element={<CompanyDetail />} />
-          <Route path="/admin/team" element={<TeamManagement />} />
-          <Route path="/admin/settings" element={<AdminSettings />} />
-          <Route path="/admin/payments" element={<PaymentsDashboard />} />
-          <Route path="/admin/testimonials" element={<TestimonialsAdmin />} />
-          <Route path="/admin/users" element={<UsersManagement />} />
-          <Route path="/admin/tickets" element={<Tickets />} />
-          <Route path="/admin/analytics" element={<Analytics />} />
-          <Route path="/admin/lexia" element={<LexIAConversations />} />
-          <Route path="/admin/identity-documents" element={<IdentityDocuments />} />
-          <Route path="/admin/invoices" element={<InvoiceGenerator />} />
-          <Route path="/admin/services" element={<AdditionalServicesAdmin />} />
-          <Route path="/client/dashboard" element={<ClientDashboard />} />
-          <Route path="/mon-espace" element={<ClientDashboard />} />
-          <Route path="/request/:id" element={<RequestDetail />} />
-          <Route path="/tracking" element={<PublicTracking />} />
-          <Route path="/suivi" element={<PublicTracking />} />
-          <Route path="/payment/callback" element={<PaymentCallback />} />
-          <Route path="/payment/success" element={<PaymentCallback />} />
-          <Route path="/payment/failed" element={<PaymentCallback />} />
-          <Route path="/payment/:requestId" element={<Payment />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/blog/:slug" element={<BlogPost />} />
-          <Route path="/ebooks" element={<Ebooks />} />
-          <Route path="/ebook/:slug" element={<EbookDownload />} />
-          <Route path="/faq" element={<FAQ />} />
-          <Route path="/questions-frequentes" element={<FAQ />} />
-          <Route path="/actualites" element={<News />} />
-          <Route path="/news" element={<News />} />
-          <Route path="/admin/news" element={<NewsManagement />} />
-          <Route path="/admin/database" element={<DatabaseManager />} />
-          <Route path="/admin/referral-withdrawals" element={<ReferralWithdrawals />} />
-          <Route path="/admin/documentation" element={<Documentation />} />
-          <Route path="/admin/faq" element={<FAQManagement />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        <Toaster />
-        <SonnerToaster />
-        <LexIA />
-        <WelcomePopup />
-      </BrowserRouter>
-      <VercelAnalytics />
-      <SpeedInsights />
-    </TooltipProvider>
+    <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
   </QueryClientProvider>
 );
 
