@@ -1,8 +1,0 @@
----
-deployment:
-  tasks:
-    - export DEPLOYPATH=/home3/legalfor/public_html/
-    - source /home3/legalfor/nodevenv/repositories/Legal_Form-/20/bin/activate
-    - npm install
-    - npm run build
-    - cp -R dist/* $DEPLOYPATH
